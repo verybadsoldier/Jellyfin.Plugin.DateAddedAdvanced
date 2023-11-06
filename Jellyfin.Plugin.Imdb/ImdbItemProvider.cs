@@ -74,17 +74,6 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             }
         }
 
-        private Task<float?> GetRating(SeriesInfo searchInfo)
-        {
-            var imdbId = searchInfo.GetProviderId(MetadataProvider.Imdb);
-            if (imdbId == null)
-            {
-                return null;
-            }
-
-            return GetImdbRating(imdbId);
-        }
-
         private async Task<MetadataResult<T>> GetResult<T>(ItemLookupInfo info, CancellationToken cancellationToken)
                         where T : BaseItem, new()
         {
@@ -96,6 +85,11 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             };
 
             var imdbId = info.GetProviderId(MetadataProvider.Imdb);
+            if (imdbId == null)
+            {
+                return null;
+            }
+
             float? rating = await GetImdbRating(imdbId).ConfigureAwait(false);
             result.Item.CommunityRating = rating;
             return result;
