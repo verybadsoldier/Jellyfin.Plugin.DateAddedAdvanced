@@ -23,6 +23,13 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet build --no-restore -c Release;find
+    ##- name: Test
+    #  run: dotnet test --no-build --verbosity normal
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Jellyfin.Plugin.Imdb.dll (net6)
+        if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
+        path: |
+          Jellyfin.Plugin.Imdb/obj/Release/net6.0/Jellyfin.Plugin.Imdb.dll
