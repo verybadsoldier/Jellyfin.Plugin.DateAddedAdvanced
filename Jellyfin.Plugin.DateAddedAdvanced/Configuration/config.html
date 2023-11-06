@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NFO DateAdded Advanced</title>
+</head>
+<body>
+    <div id="configPage" data-role="page" class="page type-interior pluginConfigurationPage configPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <h1>NFO DateAdded Advanced</h1>
+                <form class="configForm">
+                    <div class="inputContainer">
+                        <input is="emby-input" type="checkbox" id="useSeasonDateAsEpisodeDate" />
+                        <div class="fieldDescription">TV Shows: Use season dates as episode date</div>
+                    </div>
+                    <div class="selectContainer">
+                        <select is="emby-select" id="selectDateSource" label="Date Source">
+                            <option value="Created">Created</option>
+                            <option value="Modified">Created</option>
+                            <option value="Newest">Newest</option>
+                            <option value="Oldest">Oldest</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var PluginConfig = {
+                pluginId: "c31ce313-d3d3-4a93-ad6d-8b235a9c2078"
+            };
+
+            document.querySelector('.configPage')
+                .addEventListener('pageshow', function () {
+                    //Dashboard.showLoadingMsg();
+
+                    //var clientConfig, pluginConfig;
+                    /*var configureSelects = function () {
+                        if (clientConfig === null || pluginConfig === null) {
+                            return;
+                        }
+
+                        var sizeOptionsGenerator = function (dateSource) {
+                            return '<option value="' + dateSource + '">' + dateSource + '</option>';
+                        }
+
+                        var seltDateSource = document.querySelector('#selectDateSource');
+                        seltDateSource.innerHTML = clientConfig.PosterSizes.map(sizeOptionsGenerator);
+                        seltDateSource.value = pluginConfig.DateCreatedSource;
+
+                        Dashboard.hideLoadingMsg();
+                    }*/
+
+                    ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
+                        document.querySelector('#useSeasonDateAsEpisodeDate').checked = config.UseSeasonDateForEpisodes;
+
+                        var selectDateSource = document.querySelector('#selectDateSource');
+                        selectDateSource.value = config.DateCreatedSource;
+                        selectDateSource.dispatchEvent(new Event('change', {
+                            bubbles: true,
+                            cancelable: false
+                        }));
+
+                        pluginConfig = config;
+                        //configureSelects();
+                    });
+                });
+
+            document.querySelector('.configForm')
+                .addEventListener('submit', function (e) {
+                    Dashboard.showLoadingMsg();
+
+                    ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
+                        config.UseSeasonDateForEpisodes = document.querySelector('#useSeasonDateAsEpisodeDate').checked;
+                        config.DateCreatedSource = document.querySelector('#selectDateSource').value;
+                        ApiClient.updatePluginConfiguration(PluginConfig.pluginId, config).then(Dashboard.processPluginConfigurationUpdateResult);
+                    });
+
+                    e.preventDefault();
+                    return false;
+                });
+        </script>
+    </div>
+</body>
+</html>
