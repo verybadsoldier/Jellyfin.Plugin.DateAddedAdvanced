@@ -81,17 +81,18 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             {
                 QueriedById = true,
                 Item = new T(),
-                HasMetadata = true
+                HasMetadata = false
             };
 
             var imdbId = info.GetProviderId(MetadataProvider.Imdb);
             if (imdbId == null)
             {
-                return null;
+                return result;
             }
 
             float? rating = await GetImdbRating(imdbId).ConfigureAwait(false);
             result.Item.CommunityRating = rating;
+            result.HasMetadata = true;
             return result;
         }
 
