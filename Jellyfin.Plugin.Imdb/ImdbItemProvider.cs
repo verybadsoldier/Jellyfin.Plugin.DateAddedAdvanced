@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Mail;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -16,11 +17,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
 using MediaBrowser.Common.Net;
+using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
 
 namespace MediaBrowser.Providers.Plugins.Imdb
@@ -29,11 +33,23 @@ namespace MediaBrowser.Providers.Plugins.Imdb
         IRemoteMetadataProvider<Movie, MovieInfo>, IRemoteMetadataProvider<Episode, EpisodeInfo>, IHasOrder
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILibraryManager _libraryManager;
+        private readonly IFileSystem _fileSystem;
+        private readonly IServerConfigurationManager _configurationManager;
+        private readonly IProviderManager _providerManager;
 
         public ImdbItemProvider(
-    IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            ILibraryManager libraryManager,
+            IFileSystem fileSystem,
+            IServerConfigurationManager configurationManager,
+            IProviderManager providerManager)
         {
             _httpClientFactory = httpClientFactory;
+            _libraryManager = libraryManager;
+            _fileSystem = fileSystem;
+            _configurationManager = configurationManager;
+            _providerManager = providerManager;
         }
 
         public string Name => "The Internet Movie Database Ratings";
@@ -74,6 +90,45 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             }
         }
 
+        private async Task<string?> GetImdbId<T>(ItemLookupInfo info, CancellationToken cancellationToken)
+            where T : BaseItem, new()
+        {
+            var v = _providerManager.GetType();
+            var metGetMeta = v.GetMethod("GetMetadataProviders");
+
+            MethodInfo genMetGetMeta = metGetMeta.MakeGenericMethod(typeof(Movie));
+
+            // BaseItem item, LibraryOptions libraryOptions
+
+            var item = new T();
+            item.Name = info.Name;
+
+            var options = _libraryManager.GetLibraryOptions(item);
+            IEnumerable<IMetadataProvider<Movie>> providers = (IEnumerable<IMetadataProvider<Movie>>)genMetGetMeta.Invoke(_providerManager, new object[] { item, options });
+
+            foreach (var provider in providers)
+            {
+                IRemoteMetadataProvider<Series, SeriesInfo> remoteMetadataProvider = provider as IRemoteMetadataProvider<Series, SeriesInfo>;
+                if (remoteMetadataProvider == null || remoteMetadataProvider == this)
+                {
+                    continue;
+                }
+
+                MetadataResult<Series> localItem = await remoteMetadataProvider.GetMetadata((SeriesInfo)info, cancellationToken).ConfigureAwait(false);
+
+                if (localItem.HasMetadata)
+                {
+                    var id = localItem.Item.GetProviderId(MetadataProvider.Imdb);
+                    if (id != null)
+                    {
+                        return id;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         private async Task<MetadataResult<T>> GetResult<T>(ItemLookupInfo info, CancellationToken cancellationToken)
                         where T : BaseItem, new()
         {
@@ -85,6 +140,11 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             };
 
             var imdbId = info.GetProviderId(MetadataProvider.Imdb);
+            if (imdbId == null)
+            {
+                imdbId = await GetImdbId<T>(info, cancellationToken).ConfigureAwait(false);
+            }
+
             if (imdbId == null)
             {
                 return result;
