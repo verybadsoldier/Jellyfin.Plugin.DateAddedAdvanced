@@ -39,7 +39,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <summary>
     /// Gets Description.
     /// </summary>
-    public override string Description => "Get metadata for movies and other video content from IMDb.";
+    public override string Description => "Get ratings for movies and episodes from IMDb.";
 
     /// <inheritdoc />
     public IEnumerable<PluginPageInfo> GetPages()

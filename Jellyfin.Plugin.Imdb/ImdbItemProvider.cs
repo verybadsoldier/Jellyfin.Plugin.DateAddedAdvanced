@@ -4,6 +4,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -16,6 +18,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Imdb;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -90,31 +93,44 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             }
         }
 
-        private async Task<string?> GetImdbId<T>(ItemLookupInfo info, CancellationToken cancellationToken)
-            where T : BaseItem, new()
+        private BaseItem GetBaseItemFromPath(string path)
         {
-            var v = _providerManager.GetType();
-            var metGetMeta = v.GetMethod("GetMetadataProviders");
+            var items = _libraryManager.GetItemList(new InternalItemsQuery());
 
-            MethodInfo genMetGetMeta = metGetMeta.MakeGenericMethod(typeof(Movie));
+            // Find the BaseItem with the matching file path
+            BaseItem item = items.FirstOrDefault(item => item.Path == path);
+            if (item == null)
+            {
+                throw new ArgumentException($"Could not find item with path '{path}' in the library. This should not happen?!");
+            }
 
-            // BaseItem item, LibraryOptions libraryOptions
+            return item;
+        }
 
-            var item = new T();
-            item.Name = info.Name;
+        /*
+         * Use other providers to obtain IMDb ID
+         */
+        private async Task<string> GetImdbId<TItem, TInfo>(TInfo info, CancellationToken cancellationToken)
+            where TItem : BaseItem, IHasLookupInfo<TInfo>, new()
+            where TInfo : ItemLookupInfo, new()
+        {
+            // get the item related to this search info. We need it to properly get all providers and options
+            var item = GetBaseItemFromPath(info.Path);
+
+            var providerType = _providerManager.GetType();
+            var metGetMeta = providerType.GetMethod("GetMetadataProviders");
+
+            MethodInfo genMetGetMeta = metGetMeta.MakeGenericMethod(typeof(TItem));
 
             var options = _libraryManager.GetLibraryOptions(item);
-            IEnumerable<IMetadataProvider<Movie>> providers = (IEnumerable<IMetadataProvider<Movie>>)genMetGetMeta.Invoke(_providerManager, new object[] { item, options });
+            IEnumerable<IMetadataProvider<TItem>> providers = (IEnumerable<IMetadataProvider<TItem>>)genMetGetMeta.Invoke(_providerManager, new object[] { item, options });
 
-            foreach (var provider in providers)
+            // filter for provides that can handle this media type and also ignore ourselves
+            var providerList = providers.OfType<IRemoteMetadataProvider<TItem, TInfo>>().Where(x => x != this).ToList();
+
+            foreach (var provider in providerList)
             {
-                IRemoteMetadataProvider<Series, SeriesInfo> remoteMetadataProvider = provider as IRemoteMetadataProvider<Series, SeriesInfo>;
-                if (remoteMetadataProvider == null || remoteMetadataProvider == this)
-                {
-                    continue;
-                }
-
-                MetadataResult<Series> localItem = await remoteMetadataProvider.GetMetadata((SeriesInfo)info, cancellationToken).ConfigureAwait(false);
+                MetadataResult<TItem> localItem = await provider.GetMetadata(info, cancellationToken).ConfigureAwait(false);
 
                 if (localItem.HasMetadata)
                 {
@@ -129,20 +145,21 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             return null;
         }
 
-        private async Task<MetadataResult<T>> GetResult<T>(ItemLookupInfo info, CancellationToken cancellationToken)
-                        where T : BaseItem, new()
+        private async Task<MetadataResult<TBase>> GetResult<TBase, TLookupInfo>(TLookupInfo info, CancellationToken cancellationToken)
+                        where TBase : BaseItem, IHasLookupInfo<TLookupInfo>, new()
+                        where TLookupInfo : ItemLookupInfo, new()
         {
-            var result = new MetadataResult<T>
+            var result = new MetadataResult<TBase>
             {
                 QueriedById = true,
-                Item = new T(),
+                Item = new TBase(),
                 HasMetadata = false
             };
 
             var imdbId = info.GetProviderId(MetadataProvider.Imdb);
             if (imdbId == null)
             {
-                imdbId = await GetImdbId<T>(info, cancellationToken).ConfigureAwait(false);
+                imdbId = await GetImdbId<TBase, TLookupInfo>(info, cancellationToken).ConfigureAwait(false);
             }
 
             if (imdbId == null)
@@ -156,19 +173,46 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             return result;
         }
 
+        /**
+         * Variant that directly sets the rating into the item. I don't think this can work well
+         */
+        private async Task<MetadataResult<TBase>> GetResult2<TBase, TLookupInfo>(TLookupInfo info, CancellationToken cancellationToken)
+                where TBase : BaseItem, IHasLookupInfo<TLookupInfo>, new()
+                where TLookupInfo : ItemLookupInfo, new()
+        {
+            var imdbId = info.GetProviderId(MetadataProvider.Imdb);
+
+            if (imdbId != null)
+            {
+                float? rating = await GetImdbRating(imdbId).ConfigureAwait(false);
+
+                if (rating != null)
+                {
+                    var item = GetBaseItemFromPath(info.Path);
+                    item.CommunityRating = rating;
+                }
+            }
+
+            var result = new MetadataResult<TBase>
+            {
+                HasMetadata = false
+            };
+            return result;
+        }
+
         public Task<MetadataResult<Series>> GetMetadata(SeriesInfo info, CancellationToken cancellationToken)
         {
-            return GetResult<Series>(info, cancellationToken);
+            return GetResult<Series, SeriesInfo>(info, cancellationToken);
         }
 
         public Task<MetadataResult<Movie>> GetMetadata(MovieInfo info, CancellationToken cancellationToken)
         {
-            return GetResult<Movie>(info, cancellationToken);
+            return GetResult<Movie, MovieInfo>(info, cancellationToken);
         }
 
         public Task<MetadataResult<Episode>> GetMetadata(EpisodeInfo info, CancellationToken cancellationToken)
         {
-            return GetResult<Episode>(info, cancellationToken);
+            return GetResult<Episode, EpisodeInfo>(info, cancellationToken);
         }
 
         public Task<IEnumerable<RemoteSearchResult>> GetSearchResults(SeriesInfo searchInfo, CancellationToken cancellationToken)
