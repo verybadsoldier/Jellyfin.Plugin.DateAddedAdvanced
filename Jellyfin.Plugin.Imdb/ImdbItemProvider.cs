@@ -12,11 +12,13 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Mail;
 using System.Reflection;
+using System.Runtime;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using Jellyfin.Extensions.Json;
 using Jellyfin.Plugin.Imdb;
 using MediaBrowser.Common.Net;
@@ -26,6 +28,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
@@ -107,6 +110,17 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             return item;
         }
 
+        private IEnumerable<IMetadataProvider<TItem>> GetMetaDataProviders<TItem>(BaseItem item, LibraryOptions options)
+            where TItem : BaseItem, new()
+        {
+            var providerType = _providerManager.GetType();
+            var metGetMeta = providerType.GetMethod("GetMetadataProviders");
+
+            MethodInfo genMetGetMeta = metGetMeta.MakeGenericMethod(typeof(TItem));
+
+            return (IEnumerable<IMetadataProvider<TItem>>)genMetGetMeta.Invoke(_providerManager, new object[] { item, options });
+        }
+
         /*
          * Use other providers to obtain IMDb ID
          */
@@ -117,13 +131,8 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             // get the item related to this search info. We need it to properly get all providers and options
             var item = GetBaseItemFromPath(info.Path);
 
-            var providerType = _providerManager.GetType();
-            var metGetMeta = providerType.GetMethod("GetMetadataProviders");
-
-            MethodInfo genMetGetMeta = metGetMeta.MakeGenericMethod(typeof(TItem));
-
             var options = _libraryManager.GetLibraryOptions(item);
-            IEnumerable<IMetadataProvider<TItem>> providers = (IEnumerable<IMetadataProvider<TItem>>)genMetGetMeta.Invoke(_providerManager, new object[] { item, options });
+            IEnumerable<IMetadataProvider<TItem>> providers = GetMetaDataProviders<TItem>(item, options);
 
             // filter for provides that can handle this media type and also ignore ourselves
             var providerList = providers.OfType<IRemoteMetadataProvider<TItem, TInfo>>().Where(x => x != this).ToList();
