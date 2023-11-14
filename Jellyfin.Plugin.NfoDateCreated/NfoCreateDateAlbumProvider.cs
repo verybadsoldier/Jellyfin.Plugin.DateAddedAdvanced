@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.NfoDateCreated;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
@@ -89,9 +90,22 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate
             //result.Item.DateCreated = new DateTime(1986, 5, 6);
             result.HasMetadata = false;
 
+            var nfo = new NfoReader();
+
+            string xmlpath = info.Path + "album.nfo";
+            if (!File.Exists(xmlpath))
+            {
+                return result;
+            }
+
+            string dateadded = nfo.ReadDateAdded(xmlpath);
             // get the item related to this search info. We need it to properly get all providers and options
             var item = GetBaseItemFromPath(info.Path);
-            item.DateCreated = new DateTime(1979, 5, 6);
+
+            DateTime d;
+            DateTime.TryParse(dateadded, out d);
+            item.DateCreated = d
+
 
             var parent = BaseItem.ItemRepository.RetrieveItem(item.ParentId);
 
