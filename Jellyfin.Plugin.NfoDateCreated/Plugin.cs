@@ -17,11 +17,6 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate
     public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         /// <summary>
-        /// Artwork repository URL.
-        /// </summary>
-        public const string DefaultServer = "https://raw.github.com/jellyfin/emby-artwork/master/studios";
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="Plugin"/> class.
         /// </summary>
         /// <param name="applicationPaths">application paths.</param>
@@ -38,7 +33,7 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate
         public static Plugin Instance { get; private set; }
 
         /// <inheritdoc/>
-        public override Guid Id => new Guid("882a7849-1171-458d-a6fb-3de3d442ad30");
+        public override Guid Id => new Guid("c31ce313-d3d3-4a93-ad6d-8b235a9c2078");
 
         /// <inheritdoc/>
         public override string Name => "NFO Create Date";

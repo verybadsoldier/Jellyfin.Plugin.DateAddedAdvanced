@@ -19,6 +19,8 @@ using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
+using MediaBrowser.Controller.Entities.Movies;
+using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
@@ -28,364 +30,104 @@ using Microsoft.Extensions.Logging;
 
 namespace MediaBrowser.Providers.Plugins.NfoCreateDate
 {
-    //public class NfoCreateDateAlbumProvider : ILocalMetadataProvider<MusicAlbum>, IHasItemChangeMonitor
-    public class NfoCreateDateAlbumProvider : IRemoteMetadataProvider<MusicAlbum, AlbumInfo>, IHasOrder
+
+    public class NfoCreateDateAlbumProvider : ICustomMetadataProvider<MusicAlbum>,
+        ICustomMetadataProvider<Movie>, ICustomMetadataProvider<Series>, ICustomMetadataProvider<Season>, ICustomMetadataProvider<Episode>, ICustomMetadataProvider<MusicArtist>, ICustomMetadataProvider<Audio>
     {
-        private readonly IServerConfigurationManager _config;
-        private readonly IFileSystem _fileSystem;
-        private readonly ILibraryManager _libraryManager;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
         private readonly ILogger _logger;
 
-#pragma warning disable SA1401, CA2211
-        public static NfoCreateDateAlbumProvider Current;
-#pragma warning restore SA1401, CA2211
-
-        public NfoCreateDateAlbumProvider(IServerConfigurationManager config, IFileSystem fileSystem, IHttpClientFactory httpClientFactory, ILibraryManager libraryManager, ILogger<NfoCreateDateAlbumProvider> logger)
+        public NfoCreateDateAlbumProvider(ILibraryManager libraryManager, ILogger<NfoCreateDateAlbumProvider> logger)
         {
-            _config = config;
-            _fileSystem = fileSystem;
-            _httpClientFactory = httpClientFactory;
             _logger = logger;
-
-            Current = this;
-            _libraryManager = libraryManager;
         }
 
-        /// <inheritdoc />
         public string Name => "NFO Create Date";
 
-        /// <inheritdoc />
-        // After music brainz
-        public int Order => 1;
-
-        /// <inheritdoc />
-        public Task<IEnumerable<RemoteSearchResult>> GetSearchResults(AlbumInfo searchInfo, CancellationToken cancellationToken)
-            => Task.FromResult(Enumerable.Empty<RemoteSearchResult>());
-
-        private BaseItem GetBaseItemFromPath(string path)
+        private Task<ItemUpdateType> FetchAsyncInternal(string xmlpath, BaseItem item, MetadataRefreshOptions options, CancellationToken cancellationToken)
         {
-            var items = _libraryManager.GetItemList(new InternalItemsQuery());
-
-            // Find the BaseItem with the matching file path
-            BaseItem item = items.FirstOrDefault(item => item.Path == path);
-            var ff = BaseItem.ItemRepository.RetrieveItem(item.Id);
-
-            var itemsss = items.Where(item => item.Path == path).ToList();
-            if (item == null)
-            {
-                throw new ArgumentException($"Could not find item with path '{path}' in the library. This should not happen?!");
-            }
-
-            return ff;
-        }
-
-
-        /// <inheritdoc />
-        public async Task<MetadataResult<MusicAlbum>> GetMetadata(AlbumInfo info, CancellationToken cancellationToken)
-        {
-            var result = new MetadataResult<MusicAlbum>();
-            result.Item = new MusicAlbum();
-            //result.Item.DateCreated = new DateTime(1986, 5, 6);
-            result.HasMetadata = false;
-
-            var nfo = new NfoReader();
-
-            string xmlpath = info.Path + "album.nfo";
             if (!File.Exists(xmlpath))
             {
-                return result;
+                return Task.FromResult(ItemUpdateType.None);
             }
 
-            string dateadded = nfo.ReadDateAdded(xmlpath);
-            // get the item related to this search info. We need it to properly get all providers and options
-            var item = GetBaseItemFromPath(info.Path);
-
-            DateTime d;
-            DateTime.TryParse(dateadded, out d);
-            item.DateCreated = d
+            _logger.LogInformation($"Found xml file: {xmlpath}");
 
 
-            var parent = BaseItem.ItemRepository.RetrieveItem(item.ParentId);
+            string? dateadded = NfoReader.ReadDateAdded(xmlpath);
 
-            _logger.LogCritical("Saving item!");
-            Task.Delay(3000, cancellationToken).ContinueWith(_ => _libraryManager.UpdateItemAsync(item, parent, ItemUpdateType.MetadataEdit, cancellationToken)).Start();
-            _logger.LogCritical("Saving item finished!");
+            if (dateadded == null)
+            {
+                return Task.FromResult(ItemUpdateType.None);
+            }
 
-            return result;
+            DateTime newDate;
+            if (!DateTime.TryParse(dateadded, out newDate))
+            {
+                _logger.LogError($"Error parsing createddata: {dateadded}");
+                return Task.FromResult(ItemUpdateType.None);
+            }
+
+            if (item.DateCreated != newDate)
+            {
+                item.DateCreated = newDate;
+                return Task.FromResult(ItemUpdateType.MetadataEdit);
+            }
+            else
+            {
+                return Task.FromResult(ItemUpdateType.None);
+            }
         }
 
-        public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
+        public Task<ItemUpdateType> FetchAsync(MusicAlbum item, MetadataRefreshOptions options, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            string xmlpath = Path.Combine(item.Path, "album.nfo");
+            return FetchAsyncInternal(xmlpath, item, options, cancellationToken);
         }
 
-        public bool HasChanged(BaseItem item, IDirectoryService directoryService)
+        public Task<ItemUpdateType> FetchAsync(Movie item, MetadataRefreshOptions options, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            string xmlpath = Path.Combine(item.Path, "movie.nfo");
+            return FetchAsyncInternal(xmlpath, item, options, cancellationToken);
         }
 
-        public async Task<MetadataResult<MusicAlbum>> GetMetadata(ItemInfo info, IDirectoryService directoryService, CancellationToken cancellationToken)
+        public Task<ItemUpdateType> FetchAsync(Series item, MetadataRefreshOptions options, CancellationToken cancellationToken)
         {
-            var result = new MetadataResult<MusicAlbum>();
-            result.Item = new MusicAlbum();
-            //result.Item.DateCreated = new DateTime(1986, 5, 6);
-            result.HasMetadata = false;
-
-            // get the item related to this search info. We need it to properly get all providers and options
-            var item = GetBaseItemFromPath(info.Path);
-            item.DateCreated = new DateTime(1984, 5, 6);
-
-            var parent = BaseItem.ItemRepository.RetrieveItem(item.ParentId);
-
-            await _libraryManager.UpdateItemAsync(item, parent, ItemUpdateType.MetadataEdit, cancellationToken);
-
-
-            /*
-                        var id = info.GetReleaseGroupId();
-
-                        if (!string.IsNullOrWhiteSpace(id))
-                        {
-                            await EnsureInfo(id, cancellationToken).ConfigureAwait(false);
-
-                            var path = GetAlbumInfoPath(_config.ApplicationPaths, id);
-
-                            FileStream jsonStream = AsyncFile.OpenRead(path);
-                            await using (jsonStream.ConfigureAwait(false))
-                            {
-                                var obj = await JsonSerializer.DeserializeAsync<RootObject>(jsonStream, _jsonOptions, cancellationToken).ConfigureAwait(false);
-
-                                if (obj is not null && obj.album is not null && obj.album.Count > 0)
-                                {
-                                    result.Item = new MusicAlbum();
-                                    result.HasMetadata = true;
-                                    ProcessResult(result.Item, obj.album[0], info.MetadataLanguage);
-                                }
-                            }
-                        }
-            */
-            return result;
+            string xmlpath = Path.Combine(item.Path, "tvshow.nfo");
+            return FetchAsyncInternal(xmlpath, item, options, cancellationToken);
         }
 
-        /*
-private void ProcessResult(MusicAlbum item, Album result, string preferredLanguage)
-{
-   if (Plugin.Instance.Configuration.ReplaceAlbumName && !string.IsNullOrWhiteSpace(result.strAlbum))
-   {
-       item.Album = result.strAlbum;
-   }
-
-   if (!string.IsNullOrWhiteSpace(result.strArtist))
-   {
-       item.AlbumArtists = new string[] { result.strArtist };
-   }
-
-   if (!string.IsNullOrEmpty(result.intYearReleased))
-   {
-       item.ProductionYear = int.Parse(result.intYearReleased, CultureInfo.InvariantCulture);
-   }
-
-   if (!string.IsNullOrEmpty(result.strGenre))
-   {
-       item.Genres = new[] { result.strGenre };
-   }
-
-   item.SetProviderId(MetadataProvider.AudioDbArtist, result.idArtist);
-   item.SetProviderId(MetadataProvider.AudioDbAlbum, result.idAlbum);
-
-   item.SetProviderId(MetadataProvider.MusicBrainzAlbumArtist, result.strMusicBrainzArtistID);
-   item.SetProviderId(MetadataProvider.MusicBrainzReleaseGroup, result.strMusicBrainzID);
-
-   string overview = null;
-
-   if (string.Equals(preferredLanguage, "de", StringComparison.OrdinalIgnoreCase))
-   {
-       overview = result.strDescriptionDE;
-   }
-   else if (string.Equals(preferredLanguage, "fr", StringComparison.OrdinalIgnoreCase))
-   {
-       overview = result.strDescriptionFR;
-   }
-   else if (string.Equals(preferredLanguage, "nl", StringComparison.OrdinalIgnoreCase))
-   {
-       overview = result.strDescriptionNL;
-   }
-   else if (string.Equals(preferredLanguage, "ru", StringComparison.OrdinalIgnoreCase))
-   {
-       overview = result.strDescriptionRU;
-   }
-   else if (string.Equals(preferredLanguage, "it", StringComparison.OrdinalIgnoreCase))
-   {
-       overview = result.strDescriptionIT;
-   }
-   else if ((preferredLanguage ?? string.Empty).StartsWith("pt", StringComparison.OrdinalIgnoreCase))
-   {
-       overview = result.strDescriptionPT;
-   }
-
-   if (string.IsNullOrWhiteSpace(overview))
-   {
-       overview = result.strDescriptionEN;
-   }
-
-   item.Overview = (overview ?? string.Empty).StripHtml();
-}
-
-internal Task EnsureInfo(string musicBrainzReleaseGroupId, CancellationToken cancellationToken)
-{
-   var xmlPath = GetAlbumInfoPath(_config.ApplicationPaths, musicBrainzReleaseGroupId);
-
-   var fileInfo = _fileSystem.GetFileSystemInfo(xmlPath);
-
-   if (fileInfo.Exists)
-   {
-       if ((DateTime.UtcNow - _fileSystem.GetLastWriteTimeUtc(fileInfo)).TotalDays <= 2)
-       {
-           return Task.CompletedTask;
-       }
-   }
-
-   return DownloadInfo(musicBrainzReleaseGroupId, cancellationToken);
-}
-
-internal async Task DownloadInfo(string musicBrainzReleaseGroupId, CancellationToken cancellationToken)
-{
-   cancellationToken.ThrowIfCancellationRequested();
-
-   var url = AudioDbArtistProvider.BaseUrl + "/album-mb.php?i=" + musicBrainzReleaseGroupId;
-
-   var path = GetAlbumInfoPath(_config.ApplicationPaths, musicBrainzReleaseGroupId);
-
-   Directory.CreateDirectory(Path.GetDirectoryName(path));
-
-   using var response = await _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(url, cancellationToken).ConfigureAwait(false);
-   var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-   await using (stream.ConfigureAwait(false))
-   {
-       var fileStreamOptions = AsyncFile.WriteOptions;
-       fileStreamOptions.Mode = FileMode.Create;
-       fileStreamOptions.PreallocationSize = stream.Length;
-       var xmlFileStream = new FileStream(path, fileStreamOptions);
-       await using (xmlFileStream.ConfigureAwait(false))
-       {
-           await stream.CopyToAsync(xmlFileStream, cancellationToken).ConfigureAwait(false);
-       }
-   }
-}
-
-private static string GetAlbumDataPath(IApplicationPaths appPaths, string musicBrainzReleaseGroupId)
-{
-   var dataPath = Path.Combine(GetAlbumDataPath(appPaths), musicBrainzReleaseGroupId);
-
-   return dataPath;
-}
-
-private static string GetAlbumDataPath(IApplicationPaths appPaths)
-{
-   var dataPath = Path.Combine(appPaths.CachePath, "audiodb-album");
-
-   return dataPath;
-}
-
-internal static string GetAlbumInfoPath(IApplicationPaths appPaths, string musicBrainzReleaseGroupId)
-{
-   var dataPath = GetAlbumDataPath(appPaths, musicBrainzReleaseGroupId);
-
-   return Path.Combine(dataPath, "album.json");
-}
-
-/// <inheritdoc />
-public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
-{
-   throw new NotImplementedException();
-}
-
-#pragma warning disable CA1034, CA2227
-public class Album
-{
-   public string idAlbum { get; set; }
-
-   public string idArtist { get; set; }
-
-   public string strAlbum { get; set; }
-
-   public string strArtist { get; set; }
-
-   public string intYearReleased { get; set; }
-
-   public string strGenre { get; set; }
-
-   public string strSubGenre { get; set; }
-
-   public string strReleaseFormat { get; set; }
-
-   public string intSales { get; set; }
-
-   public string strAlbumThumb { get; set; }
-
-   public string strAlbumCDart { get; set; }
-
-   public string strDescriptionEN { get; set; }
-
-   public string strDescriptionDE { get; set; }
-
-   public string strDescriptionFR { get; set; }
-
-   public string strDescriptionCN { get; set; }
-
-   public string strDescriptionIT { get; set; }
-
-   public string strDescriptionJP { get; set; }
-
-   public string strDescriptionRU { get; set; }
-
-   public string strDescriptionES { get; set; }
-
-   public string strDescriptionPT { get; set; }
-
-   public string strDescriptionSE { get; set; }
-
-   public string strDescriptionNL { get; set; }
-
-   public string strDescriptionHU { get; set; }
-
-   public string strDescriptionNO { get; set; }
-
-   public string strDescriptionIL { get; set; }
-
-   public string strDescriptionPL { get; set; }
-
-   public object intLoved { get; set; }
-
-   public object intScore { get; set; }
-
-   public string strReview { get; set; }
-
-   public object strMood { get; set; }
-
-   public object strTheme { get; set; }
-
-   public object strSpeed { get; set; }
-
-   public object strLocation { get; set; }
-
-   public string strMusicBrainzID { get; set; }
-
-   public string strMusicBrainzArtistID { get; set; }
-
-   public object strItunesID { get; set; }
-
-   public object strAmazonID { get; set; }
-
-   public string strLocked { get; set; }
-}
-
-public class RootObject
-{
-   public List<Album> album { get; set; }
-}
-      */
+        public Task<ItemUpdateType> FetchAsync(Episode item, MetadataRefreshOptions options, CancellationToken cancellationToken)
+        {
+            string filename;
+            if (Plugin.Instance.Configuration.UseSeasonDateForEpisodes)
+            {
+                filename = Path.Combine(Path.GetDirectoryName(item.Path), "season.nfo");
+            }
+            else
+            {
+                filename = Path.Combine(Path.GetFileName(item.Path), "nfo");
+            }
+
+            return FetchAsyncInternal(filename, item, options, cancellationToken);
+        }
+
+        public Task<ItemUpdateType> FetchAsync(MusicArtist item, MetadataRefreshOptions options, CancellationToken cancellationToken)
+        {
+            string xmlpath = Path.Combine(item.Path, "artist.nfo");
+            return FetchAsyncInternal(xmlpath, item, options, cancellationToken);
+        }
+
+        public Task<ItemUpdateType> FetchAsync(Audio item, MetadataRefreshOptions options, CancellationToken cancellationToken)
+        {
+            string xmlpath = Path.Combine(Path.GetDirectoryName(item.Path) , "album.nfo");
+            return FetchAsyncInternal(xmlpath, item, options, cancellationToken);
+        }
+
+        public Task<ItemUpdateType> FetchAsync(Season item, MetadataRefreshOptions options, CancellationToken cancellationToken)
+        {
+            string xmlpath = Path.Combine(item.Path, "season.nfo");
+            return FetchAsyncInternal(xmlpath, item, options, cancellationToken);
+        }
     }
 
 }
