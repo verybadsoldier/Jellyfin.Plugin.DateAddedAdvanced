@@ -11,11 +11,22 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration
         public PluginConfiguration()
         {
             UseSeasonDateForEpisodes = true;
+            DateCreatedSource = DateSource.Oldest;
+        }
+
+        public enum DateSource
+        {
+            Modifed,
+            Created,
+            Oldest,
+            Newest,
         }
 
         /// <summary>
         /// Gets or sets a value indicating whether createdate for seasons should be read from season.nfo
         /// </summary>
         public bool UseSeasonDateForEpisodes { get; set; }
+
+        public DateSource DateCreatedSource { get; set; }
     }
 }

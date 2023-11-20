@@ -9,7 +9,7 @@ using MediaBrowser.Model.Serialization;
 using MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace MediaBrowser.Providers.Plugins.NfoCreateDate
+namespace Jellyfin.Plugin.NfoDateCreated
 {
     /// <summary>
     /// Artwork Plugin class.
