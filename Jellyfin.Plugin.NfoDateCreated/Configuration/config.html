@@ -10,10 +10,12 @@
                 <h1>NFO DateAdded Advanced</h1>
                 <form class="configForm">
                     <div class="inputContainer">
-                        <input is="emby-input" type="text" id="repository" label="Repository" />
-                        <div class="fieldDescription">This can be any Jellyfin-compatible artwork repository. Leave blank to use default repository.</div>
+                        <input is="emby-input" type="checkbox" id="useSeasonDateAsEpisodeDate" />
+                        <div class="fieldDescription">TV Shows: Use season dates as episode date</div>
                     </div>
-                    <br />
+                    <div class="selectContainer">
+                        <select is="emby-select" id="selectDateSource" label="Date Source"></select>
+                    </div>
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
                     </div>
@@ -22,21 +24,17 @@
         </div>
         <script type="text/javascript">
             var PluginConfig = {
-                pluginId: "872a7849-1171-458d-a6fb-3de3d442ad30"
+                pluginId: "c31ce313-d3d3-4a93-ad6d-8b235a9c2078"
             };
 
             document.querySelector('.configPage')
                 .addEventListener('pageshow', function () {
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
-                        var repository = document.querySelector('#repository');
-                        repository.value = config.RepositoryUrl;
-                        repository.dispatchEvent(new Event('change', {
-                            bubbles: true,
-                            cancelable: false
-                        }));
+                        document.querySelector('#useSeasonDateAsEpisodeDate').checked = config.UseSeasonDateForEpisodes;
+                        document.querySelector('#selectDateSource').value = config.DateCreatedSource;
 
-                        Dashboard.hideLoadingMsg();
+                        pluginConfig = config;
                     });
                 });
 
@@ -45,8 +43,8 @@
                     Dashboard.showLoadingMsg();
 
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
-                        config.RepositoryUrl = document.querySelector('#repository').value;
-
+                        config.UseSeasonDateForEpisodes = document.querySelector('#useSeasonDateAsEpisodeDate').checked;
+                        config.DateCreatedSource = document.querySelector('#selectDateSource').value;
                         ApiClient.updatePluginConfiguration(PluginConfig.pluginId, config).then(Dashboard.processPluginConfigurationUpdateResult);
                     });
 
