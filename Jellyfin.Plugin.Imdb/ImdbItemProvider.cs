@@ -32,6 +32,7 @@ using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
+using Microsoft.Extensions.Logging;
 
 namespace MediaBrowser.Providers.Plugins.Imdb
 {
@@ -40,22 +41,21 @@ namespace MediaBrowser.Providers.Plugins.Imdb
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILibraryManager _libraryManager;
-        private readonly IFileSystem _fileSystem;
-        private readonly IServerConfigurationManager _configurationManager;
         private readonly IProviderManager _providerManager;
+        private readonly ILogger _logger;
 
         public ImdbItemProvider(
             IHttpClientFactory httpClientFactory,
             ILibraryManager libraryManager,
             IFileSystem fileSystem,
             IServerConfigurationManager configurationManager,
-            IProviderManager providerManager)
+            IProviderManager providerManager,
+            ILogger<ImdbItemProvider> logger)
         {
             _httpClientFactory = httpClientFactory;
             _libraryManager = libraryManager;
-            _fileSystem = fileSystem;
-            _configurationManager = configurationManager;
             _providerManager = providerManager;
+            _logger = logger;
         }
 
         public string Name => "The Internet Movie Database Ratings";
