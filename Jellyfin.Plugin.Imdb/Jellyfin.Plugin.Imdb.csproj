@@ -38,8 +38,4 @@
     <EmbeddedResource Include="Configuration\configPage.html" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy /Y &quot;$(TargetDir)$(ProjectName).dll&quot; &quot;%25userprofile%25\AppData\local\jellyfin\plugins\$(ProjectName)\$(ProjectName).dll&quot;" />
-  </Target>
-
 </Project>

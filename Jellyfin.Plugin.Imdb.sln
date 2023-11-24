@@ -4,8 +4,6 @@ VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jellyfin.Plugin.Imdb", "Jellyfin.Plugin.Imdb\Jellyfin.Plugin.Imdb.csproj", "{D921B930-CF91-406F-ACBC-08914DCD0D34}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jellyfin.Plugin.NfoDateCreated", "Jellyfin.Plugin.NfoDateCreated\Jellyfin.Plugin.NfoDateCreated.csproj", "{BB228CF0-264A-406D-8B39-0340688C633B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -16,10 +14,6 @@ Global
 		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BB228CF0-264A-406D-8B39-0340688C633B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BB228CF0-264A-406D-8B39-0340688C633B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BB228CF0-264A-406D-8B39-0340688C633B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BB228CF0-264A-406D-8B39-0340688C633B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
