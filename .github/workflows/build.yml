@@ -1,19 +1,16 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
-name: .NET
+name: Build & Release
 
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - "v*.*.*"
   pull_request:
     branches: [ "main" ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
@@ -24,8 +21,6 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore -c Release;find
-    ##- name: Test
-    #  run: dotnet test --no-build --verbosity normal
     - name: Archive production artifacts Jellyfin.Plugin.DateAddedAdvanced
       uses: actions/upload-artifact@v3
       with:
@@ -35,7 +30,6 @@ jobs:
           Jellyfin.Plugin.DateAddedAdvanced/obj/Release/net6.0/Jellyfin.Plugin.DateAddedAdvanced.dll
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
           Jellyfin.Plugin.DateAddedAdvanced/obj/Release/net6.0/Jellyfin.Plugin.DateAddedAdvanced.dll
