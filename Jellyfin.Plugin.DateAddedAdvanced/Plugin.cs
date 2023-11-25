@@ -36,15 +36,13 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
         public override Guid Id => new Guid("c31ce313-d3d3-4a93-ad6d-8b235a9c2078");
 
         /// <inheritdoc/>
-        public override string Name => "NFO Create Date";
+        public override string Name => "DateAdded Advanced";
 
         /// <inheritdoc/>
-        public override string Description => "Sets date dadded based on NFO file";
-
-        // TODO remove when plugin removed from server.
+        public override string Description => "Sets DateAdded from different file attributes and read and writes it to NFO files";
 
         /// <inheritdoc/>
-        public override string ConfigurationFileName => "Jellyfin.Plugin.NfoCreateDate.xml";
+        public override string ConfigurationFileName => "Jellyfin.Plugin.DateAddedAdvanced.xml";
 
         /// <inheritdoc/>
         public IEnumerable<PluginPageInfo> GetPages()

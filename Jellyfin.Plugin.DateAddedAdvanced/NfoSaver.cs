@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Eventing.Reader;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -38,7 +39,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
         public string GetSavePath(BaseItem item)
         {
-            string xmlpath = PathResolver.GetXmlPathInfoForItem(item);
+            string xmlpath = PathResolver.GetXmlPathInfoForItem(item, false);
             if (string.IsNullOrEmpty(xmlpath))
             {
                 throw new ArgumentException("Could not get path for item");
@@ -47,7 +48,13 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             return xmlpath;
         }
 
-        public bool IsEnabledFor(BaseItem item, ItemUpdateType updateType) => item is Movie || item is Series || item is Season || item is MusicAlbum || item is MusicArtist;
+        public bool IsEnabledFor(BaseItem item, ItemUpdateType updateType)
+        {
+            var conf = Plugin.Instance.Configuration;
+            return (item is MusicArtist && conf.WriteArtistNfo) || (item is MusicAlbum) ||
+                 (item is Season && conf.WriteSeasonNfo) || (item is Series && conf.WriteTvShowNfo) || (item is Episode && conf.WriteEpisodeNfo) ||
+                 (item is Movie);
+        }
 
         private static void CreateXmlFile(string filePath, string rootElementName, string dateAdded)
         {
@@ -65,34 +72,83 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             xmlDoc.Save(filePath);
         }
 
+        private static void UpdateXmlFile(string filePath, string rootElementName, string dateAdded)
+        {
+            XmlDocument xmlDoc = new XmlDocument();
+
+            // Load the XML file
+            xmlDoc.Load(filePath);
+
+            // Get the root node
+            XmlNode? rootNode = xmlDoc.DocumentElement;
+
+            if (rootNode == null )
+            {
+                rootNode = xmlDoc.CreateElement(rootElementName);
+
+                xmlDoc.AppendChild(rootNode);
+            }
+
+            // Check if the "dateadded" node already exists
+            XmlNode? dateAddedNode = rootNode.SelectSingleNode("dateadded");
+
+            if (dateAddedNode == null)
+            {
+                // If it doesn't exist, create a new "dateadded" node
+                dateAddedNode = xmlDoc.CreateElement("dateadded");
+
+                // Add the new node to the root
+                rootNode.AppendChild(dateAddedNode);
+            }
+
+            // Set the value of the "dateadded" node
+            dateAddedNode.InnerText = dateAdded;
+
+            // Save the updated XML file
+            xmlDoc.Save(filePath);
+        }
+
         public Task SaveAsync(BaseItem item, CancellationToken cancellationToken)
         {
-            string xmlPath = PathResolver.GetXmlPathInfoForItem(item);
+            string xmlPath = PathResolver.GetXmlPathInfoForItem(item, false);
 
-            if (!string.IsNullOrEmpty(xmlPath) && !File.Exists(xmlPath))
+            if (string.IsNullOrEmpty(xmlPath))
             {
-                DateTime? d = _dateHelper.ResolveDateCreatedFromFile(item);
+                _logger.LogWarning("Could not resolve XML nfo path for item at path: {Item}. Type: {Type}", item.Name, item.ToString());
+                return Task.CompletedTask;
+            }
 
-                if (d == null)
-                {
-                    _logger.LogWarning("Could not get acquire date from file for item: {Item}", item.Name);
-                    return Task.CompletedTask;
-                }
+            bool fileExists = File.Exists(xmlPath);
+            if (fileExists && !Plugin.Instance.Configuration.UpdateExistingNfos)
+            {
+                _logger.LogWarning("Ignoring existing NFO due to config option: {Xml}", xmlPath);
+                return Task.CompletedTask;
+            }
 
-                string? rootname = PathResolver.GetXmlRootNodeName(item);
+            DateTime? d = _dateHelper.ResolveDateCreatedFromFile(item);
 
-                if (!string.IsNullOrEmpty(rootname))
-                {
-                    CreateXmlFile(xmlPath, rootname, d.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-                }
-                else
-                {
-                    _logger.LogWarning("Could not get XML root node name item: {Item}", item.Name);
-                }
+            if (d == null)
+            {
+                _logger.LogWarning("Could not get acquire date from file for item: {Item}", item.Name);
+                return Task.CompletedTask;
+            }
+
+            string? rootname = PathResolver.GetXmlRootNodeName(item);
+
+            if (string.IsNullOrEmpty(rootname))
+            {
+                _logger.LogWarning("Could not get XML root node name item: {Item}", item.Name);
+                return Task.CompletedTask;
+            }
+
+            var newValue = d.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            if (!fileExists)
+            {
+                CreateXmlFile(xmlPath, rootname, newValue);
             }
             else
             {
-                _logger.LogWarning("Could not resolve XML nfo path for item: {Item}", item.Name);
+                UpdateXmlFile(xmlPath, rootname, newValue);
             }
 
             return Task.CompletedTask;

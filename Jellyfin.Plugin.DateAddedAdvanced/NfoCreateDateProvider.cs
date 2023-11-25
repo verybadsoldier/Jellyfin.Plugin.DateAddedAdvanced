@@ -60,7 +60,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
         private Task<ItemUpdateType> FetchAsyncInternal(BaseItem item, MetadataRefreshOptions options, CancellationToken cancellationToken)
         {
-            string xmlpath = PathResolver.GetXmlPathInfoForItem(item);
+            string xmlpath = PathResolver.GetXmlPathInfoForItem(item, true);
 
             if (string.IsNullOrEmpty(xmlpath))
             {

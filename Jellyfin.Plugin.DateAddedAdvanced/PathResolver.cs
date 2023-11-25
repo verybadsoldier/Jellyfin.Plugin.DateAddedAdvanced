@@ -84,7 +84,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             }
         }
 
-        public static string GetXmlPathInfoForItem(BaseItem item)
+        public static string GetXmlPathInfoForItem(BaseItem item, bool modeRead)
         {
             string xmlFilePath = string.Empty;
             if (item is Movie)
@@ -101,7 +101,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             }
             else if (item is Episode)
             {
-                if (Plugin.Instance.Configuration.UseSeasonDateForEpisodes)
+                if (modeRead && Plugin.Instance.Configuration.UseSeasonDateForEpisodes)
                 {
                     var dir = Path.GetDirectoryName(item.Path);
                     if (dir == null)
