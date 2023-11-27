@@ -11,12 +11,13 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration
         public PluginConfiguration()
         {
             UseSeasonDateForEpisodes = true;
-            DateCreatedSource = DateSource.Oldest;
+            DateAddedSourceAudio = DateSource.Created;
+            DateAddedSourceVideo = DateSource.Created;
             UpdateExistingNfos = false;
             WriteArtistNfo = false;
             WriteAlbumNfo = true;
             WriteSeasonNfo = true;
-            WriteTvShowNfo = false;
+            WriteTvShowNfo = true;
             WriteEpisodeNfo = false;
             WriteMovieNfo = true;
         }
@@ -39,7 +40,9 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration
         /// </summary>
         public bool UpdateExistingNfos { get; set; }
 
-        public DateSource DateCreatedSource { get; set; }
+        public DateSource DateAddedSourceAudio { get; set; }
+
+        public DateSource DateAddedSourceVideo { get; set; }
 
         public bool WriteArtistNfo { get; set; }
 

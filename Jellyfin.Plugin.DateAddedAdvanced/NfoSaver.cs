@@ -114,14 +114,14 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
             if (string.IsNullOrEmpty(xmlPath))
             {
-                _logger.LogWarning("Could not resolve XML nfo path for item at path: {Item}. Type: {Type}", item.Name, item.ToString());
+                _logger.LogWarning("Saving NFO: Could not resolve XML nfo path for item at path: {Item}. Type: {Type}", item.Name, item.ToString());
                 return Task.CompletedTask;
             }
 
             bool fileExists = File.Exists(xmlPath);
             if (fileExists && !Plugin.Instance.Configuration.UpdateExistingNfos)
             {
-                _logger.LogWarning("Ignoring existing NFO due to config option: {Xml}", xmlPath);
+                _logger.LogInformation("Saving NFO: Not updating existing NFO due to config option: {Xml}", xmlPath);
                 return Task.CompletedTask;
             }
 
@@ -137,17 +137,19 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
             if (string.IsNullOrEmpty(rootname))
             {
-                _logger.LogWarning("Could not get XML root node name item: {Item}", item.Name);
+                _logger.LogWarning("Saving NFO: Could not get XML root node name item: {Item}", item.Name);
                 return Task.CompletedTask;
             }
 
             var newValue = d.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             if (!fileExists)
             {
+                _logger.LogWarning("Creating NFO file: {Path}", xmlPath);
                 CreateXmlFile(xmlPath, rootname, newValue);
             }
             else
             {
+                _logger.LogWarning("Updating NFO file: {Path}", xmlPath);
                 UpdateXmlFile(xmlPath, rootname, newValue);
             }
 

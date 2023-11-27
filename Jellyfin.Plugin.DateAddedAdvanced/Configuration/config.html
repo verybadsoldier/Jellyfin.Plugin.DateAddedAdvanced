@@ -41,9 +41,17 @@
                         <span>Enable writing of movie.nfo</span>
                     </label>
                     <div class="selectContainer">
-                        <select is="emby-select" id="selectDateSource" label="Date Source">
+                        <select is="emby-select" id="selectDateSourceAudio" label="DateAdded Source Audio">
                             <option value="Created">Created</option>
-                            <option value="Modified">Created</option>
+                            <option value="Modified">Modified</option>
+                            <option value="Newest">Newest</option>
+                            <option value="Oldest">Oldest</option>
+                        </select>
+                    </div>
+                    <div class="selectContainer">
+                        <select is="emby-select" id="selectDateSourceVideo" label="DateAdded Source Video">
+                            <option value="Created">Created</option>
+                            <option value="Modified">Modified</option>
                             <option value="Newest">Newest</option>
                             <option value="Oldest">Oldest</option>
                         </select>
@@ -61,25 +69,6 @@
 
             document.querySelector('.configPage')
                 .addEventListener('pageshow', function () {
-                    //Dashboard.showLoadingMsg();
-
-                    //var clientConfig, pluginConfig;
-                    /*var configureSelects = function () {
-                        if (clientConfig === null || pluginConfig === null) {
-                            return;
-                        }
-
-                        var sizeOptionsGenerator = function (dateSource) {
-                            return '<option value="' + dateSource + '">' + dateSource + '</option>';
-                        }
-
-                        var seltDateSource = document.querySelector('#selectDateSource');
-                        seltDateSource.innerHTML = clientConfig.PosterSizes.map(sizeOptionsGenerator);
-                        seltDateSource.value = pluginConfig.DateCreatedSource;
-
-                        Dashboard.hideLoadingMsg();
-                    }*/
-
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
                         document.querySelector('#useSeasonDateAsEpisodeDate').checked = config.UseSeasonDateForEpisodes;
                         document.querySelector('#updateExistingNfos').checked = config.UpdateExistingNfos;
@@ -91,15 +80,21 @@
                         document.querySelector('#writeEpisodeNfo').checked = config.WriteEpisodeNfo;
                         document.querySelector('#writeMovieNfo').checked = config.WriteMovieNfo;
 
-                        var selectDateSource = document.querySelector('#selectDateSource');
-                        selectDateSource.value = config.DateCreatedSource;
-                        selectDateSource.dispatchEvent(new Event('change', {
+                        var selectDateSourceAudio = document.querySelector('#selectDateSourceAudio');
+                        selectDateSourceAudio.value = config.DateAddedSourceAudio;
+                        selectDateSourceAudio.dispatchEvent(new Event('change', {
+                            bubbles: true,
+                            cancelable: false
+                        }));
+
+                        var selectDateSourceVideo = document.querySelector('#selectDateSourceVideo');
+                        selectDateSourceVideo.value = config.DateAddedSourceVideo;
+                        selectDateSourceVideo.dispatchEvent(new Event('change', {
                             bubbles: true,
                             cancelable: false
                         }));
 
                         pluginConfig = config;
-                        //configureSelects();
                     });
                 });
 
@@ -110,7 +105,8 @@
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
                         config.UseSeasonDateForEpisodes = document.querySelector('#useSeasonDateAsEpisodeDate').checked;
                         config.UpdateExistingNfos = document.querySelector('#updateExistingNfos').checked;
-                        config.DateCreatedSource = document.querySelector('#selectDateSource').value;
+                        config.DateAddedSourceAudio = document.querySelector('#selectDateSourceAudio').value;
+                        config.DateAddedSourceVideo = document.querySelector('#selectDateSourceVideo').value;
 
                         config.WriteArtistNfo = document.querySelector('#writeArtistNfo').checked;
                         config.WriteSeasonNfo = document.querySelector('#writeSeasonNfo').checked;

@@ -24,13 +24,14 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             _logger = logger;
         }
 
-        private DateTime GetDateCreatedFromFile(FileSystemMetadata metaData)
+        private DateTime GetDateCreatedFromFile(FileSystemMetadata metaData, BaseItem item)
         {
             var write = _fileSystem.GetLastWriteTimeUtc(metaData);
             var create = _fileSystem.GetCreationTimeUtc(metaData);
 
             DateTime dt = DateTime.MinValue;
-            switch (Plugin.Instance.Configuration.DateCreatedSource)
+            DateSource source = item is Video ? Plugin.Instance.Configuration.DateAddedSourceVideo : Plugin.Instance.Configuration.DateAddedSourceAudio;
+            switch (source)
             {
                 case DateSource.Modifed:
                     dt = write;
@@ -55,7 +56,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             if (item is Movie)
             {
                 var meta = _fileSystem.GetFileInfo(item.Path);
-                return GetDateCreatedFromFile(meta);
+                return GetDateCreatedFromFile(meta, item);
             }
             else if (item is Series)
             {
@@ -84,7 +85,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             else if (item is Episode)
             {
                 var meta = _fileSystem.GetFileInfo(item.Path);
-                return GetDateCreatedFromFile(meta);
+                return GetDateCreatedFromFile(meta, item);
             }
             else if (item is MusicAlbum)
             {
@@ -101,7 +102,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             else if (item is Audio)
             {
                 var meta = _fileSystem.GetFileInfo(item.Path);
-                t = GetDateCreatedFromFile(meta);
+                t = GetDateCreatedFromFile(meta, item);
             }
             else if (item is MusicArtist)
             {

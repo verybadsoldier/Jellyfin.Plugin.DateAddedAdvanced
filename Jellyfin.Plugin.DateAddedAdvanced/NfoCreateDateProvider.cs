@@ -60,6 +60,22 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
         private Task<ItemUpdateType> FetchAsyncInternal(BaseItem item, MetadataRefreshOptions options, CancellationToken cancellationToken)
         {
+            if (item.Path == null)
+            {
+                string additionalInfo = string.Join(",", item.PhysicalLocations);
+                if (item is Season)
+                {
+                    additionalInfo = ((Season) item).SeriesName;
+                }
+                else if (item is Series)
+                {
+                    additionalInfo = ((Series)item).OriginalTitle;
+                }
+
+                _logger.LogError("Item.Path is null. This is suspicious. Name: {Name} - Item: {Item}. More Info: {Info}", item.Name, item.ToString(), additionalInfo);
+                return Task.FromResult(ItemUpdateType.None);
+            }
+
             string xmlpath = PathResolver.GetXmlPathInfoForItem(item, true);
 
             if (string.IsNullOrEmpty(xmlpath))
