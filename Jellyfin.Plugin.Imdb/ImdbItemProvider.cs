@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -33,6 +34,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
+using static MediaBrowser.Providers.Plugins.Imdb.ImdbItemProvider;
 
 namespace MediaBrowser.Providers.Plugins.Imdb
 {
@@ -43,6 +45,7 @@ namespace MediaBrowser.Providers.Plugins.Imdb
         private readonly ILibraryManager _libraryManager;
         private readonly IProviderManager _providerManager;
         private readonly ILogger _logger;
+        private ImdbCache _cache;
 
         public ImdbItemProvider(
             IHttpClientFactory httpClientFactory,
@@ -56,6 +59,7 @@ namespace MediaBrowser.Providers.Plugins.Imdb
             _libraryManager = libraryManager;
             _providerManager = providerManager;
             _logger = logger;
+            _cache = new ImdbCache(TimeSpan.FromHours(24));
         }
 
         public string Name => "The Internet Movie Database Ratings";
@@ -69,30 +73,55 @@ namespace MediaBrowser.Providers.Plugins.Imdb
 
             using (var client = _httpClientFactory.CreateClient(NamedClient.Default))
             {
-                HttpResponseMessage response = await client.GetAsync(itemUrl).ConfigureAwait(false);
-
-                // Check if the request was successful.
-                if (!response.IsSuccessStatusCode)
+                for (var i = 0; i < 10; ++i)
                 {
-                    throw new InvalidOperationException($"Error querying IMDb URL: {itemUrl}");
+                    HttpResponseMessage response = await client.GetAsync(itemUrl).ConfigureAwait(false);
+
+                    // Check if the request was successful.
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+                        {
+                            int waitTime = 240;
+                            _logger.LogInformation("We were rate limited by IMDb. Current IMDb ID: {ID}. We wait for {Time} seconds now...", imdbId, waitTime);
+                            await Task.Delay(waitTime * 1000).ConfigureAwait(false);
+                            continue;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Error querying IMDb URL: {itemUrl}. HTTP StatusCode: {response.StatusCode}");
+                        }
+                    }
+
+                    // Read the response content as a string.
+                    string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    Regex rx = new Regex("<script type=\"application/ld\\+json\">(.*?)</script>", RegexOptions.Compiled);
+
+                    MatchCollection matches = rx.Matches(responseContent);
+
+                    if (matches.Count == 0)
+                    {
+                        throw new InvalidOperationException("Error parsing IMDb website");
+                    }
+
+                    var jsonData = matches[0].Groups[1].Value;
+                    var imdbData = JsonSerializer.Deserialize<ImdbData>(jsonData);
+
+                    if (imdbData.aggregateRating == null)
+                    {
+                        _logger.LogInformation("No IMDb rating found IMDb ID {ID}", imdbId);
+                        return null;
+                    }
+
+                    _logger.LogInformation("Retrieved IMDb rating for ID {ID}: {Rating}", imdbId, imdbData.aggregateRating.ratingValue);
+
+                    return imdbData.aggregateRating.ratingValue;
                 }
 
-                // Read the response content as a string.
-                string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                _logger.LogError("Failed getting an IMDb rating for ID {ID}", imdbId);
 
-                Regex rx = new Regex("<script type=\"application/ld\\+json\">(.*?)</script>", RegexOptions.Compiled);
-
-                MatchCollection matches = rx.Matches(responseContent);
-
-                if (matches.Count == 0)
-                {
-                    throw new InvalidOperationException("Error parsing IMDb website");
-                }
-
-                var jsonData = matches[0].Groups[1].Value;
-                var imdbData = JsonSerializer.Deserialize<ImdbData>(jsonData);
-
-                return imdbData.aggregateRating.ratingValue;
+                return null;
             }
         }
 
@@ -151,6 +180,8 @@ namespace MediaBrowser.Providers.Plugins.Imdb
                 }
             }
 
+            _logger.LogWarning("Could not get an IMDb ID for ítem: {Item}", item.Path);
+
             return null;
         }
 
@@ -176,36 +207,20 @@ namespace MediaBrowser.Providers.Plugins.Imdb
                 return result;
             }
 
-            float? rating = await GetImdbRating(imdbId).ConfigureAwait(false);
-            result.Item.CommunityRating = rating;
-            result.HasMetadata = true;
-            return result;
-        }
+            float? rating = _cache.Query(imdbId);
 
-        /**
-         * Variant that directly sets the rating into the item. I don't think this can work well
-         */
-        private async Task<MetadataResult<TBase>> GetResult2<TBase, TLookupInfo>(TLookupInfo info, CancellationToken cancellationToken)
-                where TBase : BaseItem, IHasLookupInfo<TLookupInfo>, new()
-                where TLookupInfo : ItemLookupInfo, new()
-        {
-            var imdbId = info.GetProviderId(MetadataProvider.Imdb);
-
-            if (imdbId != null)
+            if (rating == null)
             {
-                float? rating = await GetImdbRating(imdbId).ConfigureAwait(false);
+                rating = await GetImdbRating(imdbId).ConfigureAwait(false);
 
                 if (rating != null)
                 {
-                    var item = GetBaseItemFromPath(info.Path);
-                    item.CommunityRating = rating;
+                    _cache.Add(imdbId, rating.Value);
                 }
             }
 
-            var result = new MetadataResult<TBase>
-            {
-                HasMetadata = false
-            };
+            result.Item.CommunityRating = rating;
+            result.HasMetadata = true;
             return result;
         }
 
