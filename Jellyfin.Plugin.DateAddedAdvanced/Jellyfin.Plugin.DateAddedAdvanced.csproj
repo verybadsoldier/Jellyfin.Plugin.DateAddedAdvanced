@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <CodeAnalysisRuleSet>../jellyfin.ruleset</CodeAnalysisRuleSet>
     <Version>$(VersionPrefix)</Version>
-    <VersionPrefix>1.1.0.0</VersionPrefix>
+    <VersionPrefix>1.2.0.0</VersionPrefix>
     <FileVersion></FileVersion>
     <AssemblyVersion></AssemblyVersion>
   </PropertyGroup>
