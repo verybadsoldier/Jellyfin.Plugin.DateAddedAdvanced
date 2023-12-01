@@ -6,10 +6,12 @@
 
 ## About
 
-This plugin adds advanced capabilities to control the DateAdded property of library items.
+This plugin adds advanced capabilities to control the DateAdded property of library items and also fixed one shortcoming of the default Jellyfin behavior.
 By default, Jellyfin uses the created date from file and directory attributes for the DateAdded property. The DateAdded is a useful information worth preserving and the file attributes might get changed unintentionally over the years. So they might get lost when having to reset the Jeyllfin database.
+On Linux, due to the behavior of the .NET framework, Jellyfin is not acquiring the created date correctly and is wrongly reporting modified date instead as reported here:
+https://github.com/jellyfin/jellyfin/issues/10655
 
-With this plugin, the source for the DateAdded property in Jellyfin is changed. The plugin can also store and read DateAdded to and from NFO files.
+With this plugin, the source for the DateAdded property in Jellyfin is changed. The plugin can also store and read DateAdded to and from NFO files. Also, the bug described above gets fixed when using the plugin and the correct create date is used by Jellyin also on Linux (when supported by the filesystem used).
 
 When the plugin is installed and a library scan is performed, then this will be happen related to DateAdded properties. When scanning, NFO files will always have priority over file and directory filesystem attributes. So, when an NFO file is found, then the `dateadded` node is read and used.
 If no NFO file is found, then the default behavior of Jellyfin is changed in the following ways:

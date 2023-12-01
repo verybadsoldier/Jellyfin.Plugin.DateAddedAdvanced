@@ -53,7 +53,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             var conf = Plugin.Instance.Configuration;
             return (item is MusicArtist && conf.WriteArtistNfo) || (item is MusicAlbum) ||
                  (item is Season && conf.WriteSeasonNfo) || (item is Series && conf.WriteTvShowNfo) || (item is Episode && conf.WriteEpisodeNfo) ||
-                 (item is Movie);
+                 (item is Movie && conf.WriteMovieNfo);
         }
 
         private static void CreateXmlFile(string filePath, string rootElementName, string dateAdded)
