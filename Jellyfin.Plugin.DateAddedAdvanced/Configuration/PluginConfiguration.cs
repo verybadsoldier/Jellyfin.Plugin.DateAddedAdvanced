@@ -24,7 +24,7 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration
 
         public enum DateSource
         {
-            Modifed,
+            Modified,
             Created,
             Oldest,
             Newest,
