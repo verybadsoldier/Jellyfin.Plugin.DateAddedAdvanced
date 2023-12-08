@@ -161,6 +161,18 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                     }
                 }
             }
+            else if (item is Folder)
+            {
+                Folder folder = (Folder)item;
+                foreach (var d in folder.Children)
+                {
+                    var childdate = ResolveDateCreatedFromFile(d);
+                    if (childdate != null && (datetime == null || childdate < datetime))
+                    {
+                        datetime = childdate;
+                    }
+                }
+            }
             else if (item is Audio)
             {
                 var meta = _fileSystem.GetFileInfo(item.Path);
