@@ -60,74 +60,84 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
         private Task<ItemUpdateType> FetchAsyncInternal(BaseItem item, MetadataRefreshOptions options, CancellationToken cancellationToken)
         {
-            if (item.Path == null)
+            try
             {
-                string additionalInfo = string.Join(",", item.PhysicalLocations);
-                if (item is Season)
+                if (item.Path == null)
                 {
-                    additionalInfo = ((Season) item).SeriesName;
-                }
-                else if (item is Series)
-                {
-                    additionalInfo = ((Series)item).OriginalTitle;
-                }
+                    string additionalInfo = string.Join(",", item.PhysicalLocations);
+                    if (item is Season)
+                    {
+                        additionalInfo = ((Season)item).SeriesName;
+                    }
+                    else if (item is Series)
+                    {
+                        additionalInfo = ((Series)item).OriginalTitle;
+                    }
 
-                _logger.LogError("Item.Path is null. This is suspicious. Name: {Name} - Item: {Item}. More Info: {Info}", item.Name, item.ToString(), additionalInfo);
-                return Task.FromResult(ItemUpdateType.None);
-            }
-
-            string xmlpath = PathResolver.GetXmlPathInfoForItem(item, true);
-
-            if (string.IsNullOrEmpty(xmlpath))
-            {
-                _logger.LogWarning("Could not get xml path for item: {Item}", item.GetType().Name);
-                return Task.FromResult(ItemUpdateType.None);
-            }
-
-            DateTime? newDate;
-
-            if (string.IsNullOrEmpty(xmlpath) || !File.Exists(xmlpath))
-            {
-                _logger.LogInformation("No XML file available: {XmlPath}. Using DateCreated from file attributes according to config", xmlpath);
-
-                newDate = _dateHelper.ResolveDateCreatedFromFile(item);
-            }
-            else
-            {
-                _logger.LogInformation("Found xml file: {XmlPath}", xmlpath);
-
-                string rootname = PathResolver.GetXmlRootNodeName(item);
-
-                if (string.IsNullOrEmpty(rootname))
-                {
-                    _logger.LogWarning("Could not get xml root node namme for item: {Item}", item.GetType().Name);
+                    _logger.LogError("Item.Path is null. This is suspicious. Name: {Name} - Item: {Item}. More Info: {Info}", item.Name, item.ToString(), additionalInfo);
                     return Task.FromResult(ItemUpdateType.None);
                 }
 
-                string dateadded = ReadDateAdded(xmlpath, rootname);
+                string xmlpath = PathResolver.GetXmlPathInfoForItem(item, true);
 
-                if (dateadded == null)
+                if (string.IsNullOrEmpty(xmlpath))
                 {
+                    _logger.LogWarning("Could not get xml path for item: {Item}", item.GetType().Name);
                     return Task.FromResult(ItemUpdateType.None);
                 }
 
-                DateTime parsedDate;
-                if (!DateTime.TryParse(dateadded, out parsedDate))
+                DateTime? newDate;
+
+                if (string.IsNullOrEmpty(xmlpath) || !File.Exists(xmlpath))
                 {
-                    _logger.LogError("Error parsing createddata: {DateAdded}", dateadded);
-                    return Task.FromResult(ItemUpdateType.None);
+                    _logger.LogInformation("No XML file available at: {XmlPath}. Using DateCreated from file attributes according to config", xmlpath);
+
+                    newDate = _dateHelper.ResolveDateCreatedFromFile(item);
+                }
+                else
+                {
+                    _logger.LogInformation("Found xml file: {XmlPath}", xmlpath);
+
+                    string rootname = PathResolver.GetXmlRootNodeName(item);
+
+                    if (string.IsNullOrEmpty(rootname))
+                    {
+                        _logger.LogWarning("Could not get xml root node namme for item: {Item}", item.GetType().Name);
+                        return Task.FromResult(ItemUpdateType.None);
+                    }
+
+                    _logger.LogWarning("Reading XML file: {Item}", xmlpath);
+                    string dateadded = ReadDateAdded(xmlpath, rootname);
+                    _logger.LogWarning("Reading XML file Result: {Item}", dateadded);
+
+                    if (dateadded == null)
+                    {
+                        return Task.FromResult(ItemUpdateType.None);
+                    }
+
+                    DateTime parsedDate;
+                    if (!DateTime.TryParse(dateadded, out parsedDate))
+                    {
+                        _logger.LogError("Error parsing createddata: {DateAdded}", dateadded);
+                        return Task.FromResult(ItemUpdateType.None);
+                    }
+
+                    newDate = parsedDate;
                 }
 
-                newDate = parsedDate;
+                if (item.DateCreated != newDate && newDate != null)
+                {
+                    item.DateCreated = newDate.Value;
+                    return Task.FromResult(ItemUpdateType.MetadataEdit);
+                }
+                else
+                {
+                    return Task.FromResult(ItemUpdateType.None);
+                }
             }
-
-            if (item.DateCreated != newDate && newDate != null)
+            catch (Exception ex)
             {
-                item.DateCreated = newDate.Value;
-                return Task.FromResult(ItemUpdateType.MetadataEdit);
-            }
-            else
-            {
+                _logger.LogError(ex, "Error fetching metadata for item: {Item}", item.Name);
                 return Task.FromResult(ItemUpdateType.None);
             }
         }

@@ -17,6 +17,10 @@
                         <span>Update existing NFO files (otherwise only create if not yet existing)</span>
                     </label>
                     <label class="checkboxContainer">
+                        <input is="emby-input" type="checkbox" id="renameExistingMisformedNfos" />
+                        <span>Rename foreign or misformed existing NFO files to .bak (then create proper ones)</span>
+                    </label>
+                    <label class="checkboxContainer">
                         <input is="emby-input" type="checkbox" id="writeArtistNfo" />
                         <span>Enable writing of artist.nfo</span>
                     </label>
@@ -72,6 +76,7 @@
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
                         document.querySelector('#useSeasonDateAsEpisodeDate').checked = config.UseSeasonDateForEpisodes;
                         document.querySelector('#updateExistingNfos').checked = config.UpdateExistingNfos;
+                        document.querySelector('#renameExistingMisformedNfos').checked = config.RenameExistingMisformedNfos;
 
                         document.querySelector('#writeArtistNfo').checked = config.WriteArtistNfo;
                         document.querySelector('#writeAlbumNfo').checked = config.WriteAlbumNfo;
@@ -105,6 +110,7 @@
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
                         config.UseSeasonDateForEpisodes = document.querySelector('#useSeasonDateAsEpisodeDate').checked;
                         config.UpdateExistingNfos = document.querySelector('#updateExistingNfos').checked;
+                        config.RenameExistingMisformedNfos = document.querySelector('#renameExistingMisformedNfos').checked;
                         config.DateAddedSourceAudio = document.querySelector('#selectDateSourceAudio').value;
                         config.DateAddedSourceVideo = document.querySelector('#selectDateSourceVideo').value;
 

@@ -2,7 +2,7 @@ name: Build & Release
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev*" ]
     tags:
       - "v*.*.*"
   pull_request:
@@ -12,11 +12,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -24,7 +24,7 @@ jobs:
     - name: Archive production artifacts Jellyfin.Plugin.DateAddedAdvanced
       uses: actions/upload-artifact@v3
       with:
-        name: Jellyfin.Plugin.DateAddedAdvanced (net6)
+        name: Jellyfin.Plugin.DateAddedAdvanced (net8)
         if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
         path: |
           Jellyfin.Plugin.DateAddedAdvanced/obj/Release/net8.0/Jellyfin.Plugin.DateAddedAdvanced.dll

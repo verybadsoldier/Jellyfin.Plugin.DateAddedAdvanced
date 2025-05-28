@@ -6,7 +6,7 @@
 
 ## About
 
-This plugin adds advanced capabilities to control the DateAdded property of library items and also fixed one shortcoming of the default Jellyfin behavior.
+This plugin adds advanced capabilities to control the DateAdded property of library items and also fixes one shortcoming of the default Jellyfin behavior.
 By default, Jellyfin uses the created date from file and directory attributes for the DateAdded property. The DateAdded is a useful information worth preserving and the file attributes might get changed unintentionally over the years. So they might get lost when having to reset the Jeyllfin database.
 On Linux, due to the behavior of the .NET framework, Jellyfin is not acquiring the created date correctly and is wrongly reporting modified date instead as reported here:
 https://github.com/jellyfin/jellyfin/issues/10655
@@ -46,6 +46,9 @@ Newly created NFO files by this plugin, will only contain `dateadded`. E.g.:
 </album>
 ```
 
+### Option: RenameExistingMisformedNfos (available in >= 2.1.0.0)
+It may be the case that when scanning media files there are already existing .nfo files which are not Jellyfin XML files. When using the option `RenameExistingMisformedNfos`, such files will be renamed by appending a `.bak` suffix. Then, a new and proper NFO file can be created to store the `dateadded` information.
+
 ## Build & Installation Process
 
 1. Clone this repository
@@ -58,4 +61,4 @@ Newly created NFO files by this plugin, will only contain `dateadded`. E.g.:
 dotnet publish --configuration Release --output bin
 ```
 
-4. Place the resulting `Jellyfin.Plugin.Bookshelf.dll` file in a folder called `plugins/` inside your Jellyfin installation / data directory.
+4. Place the resulting `Jellyfin.Plugin.Bookshelf.dll` file in a folder called `plugins/Jellyfin.Plugin.Bookshelf` inside your Jellyfin installation / data directory.

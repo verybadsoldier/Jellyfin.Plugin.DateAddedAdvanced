@@ -14,11 +14,12 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration
             DateAddedSourceAudio = DateSource.Created;
             DateAddedSourceVideo = DateSource.Created;
             UpdateExistingNfos = false;
+            RenameExistingMisformedNfos = true;
             WriteArtistNfo = false;
             WriteAlbumNfo = true;
-            WriteSeasonNfo = true;
+            WriteSeasonNfo = false;
             WriteTvShowNfo = true;
-            WriteEpisodeNfo = false;
+            WriteEpisodeNfo = true;
             WriteMovieNfo = true;
         }
 
@@ -39,6 +40,11 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration
         /// Gets or sets a value indicating whether existing nfo files should be updated.
         /// </summary>
         public bool UpdateExistingNfos { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether existing nfo files should be renamed to.bak file if misformed.
+        /// </summary>
+        public bool RenameExistingMisformedNfos { get; set; }
 
         public DateSource DateAddedSourceAudio { get; set; }
 
