@@ -1,24 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics.Eventing.Reader;
+using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
-using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.FileIO;
-using static MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration.PluginConfiguration;
+
 
 namespace Jellyfin.Plugin.DateAddedAdvanced
 {
@@ -72,6 +62,30 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             xmlDoc.Save(filePath);
         }
 
+        private static bool CheckXmlFile(string filePath, string rootElementName)
+        {
+            try
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+
+                // Load the XML file
+                xmlDoc.Load(filePath);
+
+                // Get the root node
+                XmlNode? rootNode = xmlDoc.DocumentElement;
+                if (rootNode == null || rootNode.Name != rootElementName)
+                {
+                    return false; // Root node is missing or does not match the expected name
+                }
+            }
+            catch (Exception)
+            {
+                return false; // XML file is not well-formed
+            }
+
+            return true; // XML file is well-formed and has the correct root node
+        }
+
         private static void UpdateXmlFile(string filePath, string rootElementName, string dateAdded)
         {
             XmlDocument xmlDoc = new XmlDocument();
@@ -82,12 +96,8 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             // Get the root node
             XmlNode? rootNode = xmlDoc.DocumentElement;
 
-            if (rootNode == null )
-            {
-                rootNode = xmlDoc.CreateElement(rootElementName);
-
-                xmlDoc.AppendChild(rootNode);
-            }
+            Debug.Assert(rootNode != null, "Root node should not be null at this point.");
+            Debug.Assert(rootNode.Name == rootElementName, $"Root node name should be '{rootElementName}', but was '{rootNode.Name}'.");
 
             // Check if the "dateadded" node already exists
             XmlNode? dateAddedNode = rootNode.SelectSingleNode("dateadded");
@@ -114,14 +124,43 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
             if (string.IsNullOrEmpty(xmlPath))
             {
-                _logger.LogWarning("Saving NFO: Could not resolve XML nfo path for item at path: {Item}. Type: {Type}", item.Name, item.ToString());
+                _logger.LogWarning("NfoSaver: Could not resolve XML nfo path for item at path: {Item}. Type: {Type}", item.Name, item.ToString());
                 return Task.CompletedTask;
             }
 
             bool fileExists = File.Exists(xmlPath);
+
+            string? rootname = PathResolver.GetXmlRootNodeName(item);
+
+            if (string.IsNullOrEmpty(rootname))
+            {
+                _logger.LogWarning("NfoSaver: Could not get XML root node name item: {Item}", item.Name);
+                return Task.CompletedTask;
+            }
+
+            if (fileExists)
+            {
+                _logger.LogDebug("NfoSaver: Checking if file is misformed XML: {Xml}", xmlPath);
+                if (!CheckXmlFile(xmlPath, rootname))
+                {
+                    if (!Plugin.Instance.Configuration.RenameExistingMisformedNfos)
+                    {
+                        _logger.LogWarning("NfoSaver: File is misformed XML {Xml}. Due to config setting RenameExitingMisformedNfos, we will cancel", xmlPath);
+                        return Task.CompletedTask;
+                    }
+
+                    // rename file to bak file
+                    string bakPath = xmlPath + ".bak";
+                    _logger.LogInformation("NfoSaver: Renaming misformed NFO file to backup file: {BakPath}", bakPath);
+                    File.Move(xmlPath, bakPath);
+
+                    fileExists = false;
+                }
+            }
+
             if (fileExists && !Plugin.Instance.Configuration.UpdateExistingNfos)
             {
-                _logger.LogInformation("Saving NFO: Not updating existing NFO due to config option: {Xml}", xmlPath);
+                _logger.LogInformation("NfoSaver: Not updating existing NFO due to config option: {Xml}", xmlPath);
                 return Task.CompletedTask;
             }
 
@@ -129,27 +168,20 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
             if (d == null)
             {
-                _logger.LogWarning("Could not get acquire date from file for item: {Item}", item.Name);
-                return Task.CompletedTask;
-            }
-
-            string? rootname = PathResolver.GetXmlRootNodeName(item);
-
-            if (string.IsNullOrEmpty(rootname))
-            {
-                _logger.LogWarning("Saving NFO: Could not get XML root node name item: {Item}", item.Name);
+                _logger.LogWarning("NfoSaver: Could not get acquire date from file for item: {Item}", item.Name);
                 return Task.CompletedTask;
             }
 
             var newValue = d.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             if (!fileExists)
             {
-                _logger.LogWarning("Creating NFO file: {Path}", xmlPath);
+                _logger.LogInformation("NfoSaver: Creating NFO file: {Path}", xmlPath);
                 CreateXmlFile(xmlPath, rootname, newValue);
             }
             else
             {
-                _logger.LogWarning("Updating NFO file: {Path}", xmlPath);
+                // we already checked if the file is misformed XML, so we can update it
+                _logger.LogInformation("NfoSaver: Updating NFO file: {Path} with date: {Date}", xmlPath, newValue);
                 UpdateXmlFile(xmlPath, rootname, newValue);
             }
 
