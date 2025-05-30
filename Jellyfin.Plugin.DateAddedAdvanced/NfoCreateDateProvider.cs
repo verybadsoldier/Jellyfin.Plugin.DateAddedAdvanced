@@ -128,6 +128,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                 if (item.DateCreated != newDate && newDate != null)
                 {
                     item.DateCreated = newDate.Value;
+                    _logger.LogInformation("Updating database item with dateadded: {DateAdded}", item.DateCreated);
                     return Task.FromResult(ItemUpdateType.MetadataEdit);
                 }
                 else

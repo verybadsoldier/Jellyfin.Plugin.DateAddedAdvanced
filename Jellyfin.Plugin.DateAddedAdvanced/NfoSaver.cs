@@ -124,7 +124,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
             if (string.IsNullOrEmpty(xmlPath))
             {
-                _logger.LogWarning("NfoSaver: Could not resolve XML nfo path for item at path: {Item}. Type: {Type}", item.Name, item.ToString());
+                _logger.LogWarning("Could not resolve XML nfo path for item at path: {Item}. Type: {Type}", item.Name, item.ToString());
                 return Task.CompletedTask;
             }
 
@@ -134,18 +134,18 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
             if (string.IsNullOrEmpty(rootname))
             {
-                _logger.LogWarning("NfoSaver: Could not get XML root node name item: {Item}", item.Name);
+                _logger.LogWarning("Could not get XML root node name item: {Item}", item.Name);
                 return Task.CompletedTask;
             }
 
             if (fileExists)
             {
-                _logger.LogDebug("NfoSaver: Checking if file is misformed XML: {Xml}", xmlPath);
+                _logger.LogDebug("Checking if file is misformed XML: {Xml}", xmlPath);
                 if (!CheckXmlFile(xmlPath, rootname))
                 {
                     if (!Plugin.Instance.Configuration.RenameExistingMisformedNfos)
                     {
-                        _logger.LogWarning("NfoSaver: File is misformed XML {Xml}. Due to config setting RenameExitingMisformedNfos, we will cancel", xmlPath);
+                        _logger.LogWarning("File is misformed XML {Xml}. Due to config setting RenameExitingMisformedNfos, we will cancel", xmlPath);
                         return Task.CompletedTask;
                     }
 
@@ -160,28 +160,20 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
             if (fileExists && !Plugin.Instance.Configuration.UpdateExistingNfos)
             {
-                _logger.LogInformation("NfoSaver: Not updating existing NFO due to config option: {Xml}", xmlPath);
+                _logger.LogInformation("Not updating existing NFO due to config option: {Xml}", xmlPath);
                 return Task.CompletedTask;
             }
 
-            DateTime? d = _dateHelper.ResolveDateCreatedFromFile(item);
-
-            if (d == null)
-            {
-                _logger.LogWarning("NfoSaver: Could not get acquire date from file for item: {Item}", item.Name);
-                return Task.CompletedTask;
-            }
-
-            var newValue = d.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            var newValue = item.DateCreated.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             if (!fileExists)
             {
-                _logger.LogInformation("NfoSaver: Creating NFO file: {Path}", xmlPath);
+                _logger.LogInformation("Creating NFO file: {Path}", xmlPath);
                 CreateXmlFile(xmlPath, rootname, newValue);
             }
             else
             {
                 // we already checked if the file is misformed XML, so we can update it
-                _logger.LogInformation("NfoSaver: Updating NFO file: {Path} with date: {Date}", xmlPath, newValue);
+                _logger.LogInformation("Updating NFO file: {Path} with date: {Date}", xmlPath, newValue);
                 UpdateXmlFile(xmlPath, rootname, newValue);
             }
 
