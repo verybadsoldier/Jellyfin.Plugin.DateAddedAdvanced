@@ -9,7 +9,6 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.IO;
 using Microsoft.Extensions.Logging;
 
-
 namespace Jellyfin.Plugin.DateAddedAdvanced
 {
     public class NfoSaver : IMetadataFileSaver
