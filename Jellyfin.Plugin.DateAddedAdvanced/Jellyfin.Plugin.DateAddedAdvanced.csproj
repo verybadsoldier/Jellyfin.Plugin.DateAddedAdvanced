@@ -5,10 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <CodeAnalysisRuleSet>../jellyfin.ruleset</CodeAnalysisRuleSet>
-    <Version>$(VersionPrefix)</Version>
-    <VersionPrefix>3.0.1.0</VersionPrefix>
-    <FileVersion></FileVersion>
-    <AssemblyVersion></AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="GitVersion.MsBuild" Version="6.4.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Jellyfin.Common" Version="10.11.0" />
     <PackageReference Include="Jellyfin.Controller" Version="10.11.0" />
     <PackageReference Include="Jellyfin.Extensions" Version="10.11.0" />
