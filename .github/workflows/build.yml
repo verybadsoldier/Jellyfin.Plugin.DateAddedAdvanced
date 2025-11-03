@@ -7,31 +7,161 @@ on:
       - "v*.*.*"
   pull_request:
     branches: [ "main" ]
+  
+  workflow_dispatch:
+    inputs:
+      dotnet-version:
+        required: false
+        default: "9.0.x"
+        description: "The .NET version to setup for the build"
+        type: string
+      dotnet-target:
+        required: false
+        default: "net9.0"
+        description: "The .NET target to set for JPRM"
+        type: string
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    env:
+      PIP_BREAK_SYSTEM_PACKAGES: "true" # added this for local "act" run
     steps:
-    - uses: actions/checkout@v5
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: 9.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore -c Release;find
-    - name: Archive production artifacts Jellyfin.Plugin.DateAddedAdvanced
-      uses: actions/upload-artifact@v4
-      with:
-        name: Jellyfin.Plugin.DateAddedAdvanced (net9)
-        if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
-        path: |
-          Jellyfin.Plugin.DateAddedAdvanced/obj/Release/net9.0/Jellyfin.Plugin.DateAddedAdvanced.dll
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      # only release on "v*" tags
-      if: startsWith(github.ref, 'refs/tags/v')
-      with:
-        files: |
-          Jellyfin.Plugin.DateAddedAdvanced/obj/Release/net9.0/Jellyfin.Plugin.DateAddedAdvanced.dll
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "${{ inputs.dotnet-version }}"
+
+      - name: Update build.yaml and create changelog
+        if: startsWith(github.ref, 'refs/tags/')
+        id: meta
+        run: |-
+          # Store the tag (e.g., "v3.0.3") in a variable
+          TAG_WITH_V="${GITHUB_REF#refs/tags/}"
+          
+          # Create a new variable with the "v" prefix removed (e.g., "3.0.3")
+          CLEAN_VERSION="${TAG_WITH_V#v}"
+          
+          # This makes the ${CLEAN_VERSION} available to all later steps
+          echo "CLEAN_VERSION=${CLEAN_VERSION}" >> $GITHUB_ENV
+          
+          # This sets the var for OTHER JOBS (gh_release, add_to_repo)
+          echo "version=${CLEAN_VERSION}" >> $GITHUB_OUTPUT
+          
+          echo "Set version in build.yaml to ${CLEAN_VERSION}"
+          sed -i "s/version: .*/version: '${CLEAN_VERSION}'/" ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
+          
+          COMMIT_RANGE=$(git describe --tags --abbrev=0 @^)..@
+          echo "Generate changelog for commit range ${COMMIT_RANGE}"
+          CHANGELOG=$(git log "$COMMIT_RANGE" --oneline --pretty=format:"- [%h] %s")
+          
+          echo "Inject changelog into build.yaml"
+          sed -i 's/changelog: changelog/changelog: |-\n/' ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
+          echo -e "$CHANGELOG" | sed 's/^/  /' >> ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
+          
+          echo "Create changelog artifact"
+          mkdir -p ./artifacts
+          echo -e "$CHANGELOG" > ./artifacts/changelog.md
+          
+      - name: Build Jellyfin Plugin
+        uses: oddstr13/jellyfin-plugin-repository-manager@9497a0a499416cc572ed2e07a391d9f943a37b4d # v1.1.1
+        id: jprm
+        with:
+          dotnet-target: "${{ inputs.dotnet-target }}"
+          path: './Jellyfin.Plugin.DateAddedAdvanced'
+          output: './artifacts'
+        
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: build-artifact
+          if-no-files-found: error
+          path: ./artifacts
+
+  gh_release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: build-artifact
+
+      - name: Prepare GH Release Assets
+        # move changelog to not include it in the release, only use as bodyFile for release description
+        run: |-
+          mv ./changelog.md /tmp/changelog.md
+          for file in ./*; do
+            md5sum ${file#./} >> ${file%.*}.md5
+            sha256sum ${file#./} >> ${file%.*}.sha256
+          done
+          ls -l
+
+      - name: Upload GH Release Assets
+        uses: ncipollo/release-action@v1.20.0
+        with:
+          artifacts: ./*
+          bodyFile: /tmp/changelog.md
+          
+          
+  add_to_repo:
+    if: startsWith(github.ref, 'refs/tags/')
+    env:
+      CLEAN_VERSION: ${{ needs.build.outputs.version }}
+    needs:
+      - build
+      - gh_release
+    runs-on: ubuntu-latest
+    permissions: # Job-level permissions configuration starts here
+      contents: write         # 'write' access to repository contents
+      pull-requests: write    # 'write' access to pull requests
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: '0'
+          ref: "repository"
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: build-artifact
+
+      - name: Update manifest.json
+        run: |-
+          echo "::group::Installing JPRM"
+          python3 -m pip install jprm
+          echo "::endgroup::"
+
+          RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+          echo "set release tag to ${RELEASE_TAG}, get release info..."
+
+          # Add HTTP authorization header to be able to download from private github repo
+          RELEASE_INFO=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/tags/${RELEASE_TAG}")
+          DOWNLOAD_URL=$(echo "$RELEASE_INFO" | jq -r '.assets[] | select(.name | test("\\.zip$")) | .browser_download_url')
+          echo "download url: ${DOWNLOAD_URL}"
+          
+          echo "::group::Updating manifest.json"
+          jprm repo add ./manifest.json "$(ls -d *.zip)" -u "${DOWNLOAD_URL}" -U "${DOWNLOAD_URL}"
+          echo "::endgroup::"
+
+      - name: Commit file
+        run: |-
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -a -m "Update manifest.json for release ${GITHUB_REF#refs/tags/}"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v1.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: repository

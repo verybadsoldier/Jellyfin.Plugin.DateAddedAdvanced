@@ -11,6 +11,30 @@ The function of the plugin is twofold:
 
 In the plugin settings, there are various config parameters available.
 
+# Installation
+
+Two methods to install this
+
+## Method #1
+
+1. In your Jellyfin instance add a new plugin repository with this URL:
+```
+https://raw.githubusercontent.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced-Test/refs/heads/repository/manifest.json
+```
+2. The plugin should appear now in your plugin catalog and you can install it
+
+## Method #2
+
+1. Go to the release page here on GitHub and download the latest release as ZIP file:
+https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases
+
+2. Go to you Jellyfin Data Directory (https://jellyfin.org/docs/general/administration/configuration/)
+3. Go into the `plugins` subdirectory
+4. Create another subdirectory called `DateAddedAdvanced`
+5. Extract the downloaded ZIP file into that directory
+6. Restart your Jellyfin server
+
+
 # About
 
 This plugin adds advanced capabilities to control the DateAdded property of library items and also fixes one shortcoming of the default Jellyfin behavior.
