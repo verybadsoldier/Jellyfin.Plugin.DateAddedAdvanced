@@ -2,7 +2,7 @@
 name: "DateAddedAdvanced"
 guid: "daed5573-33f9-460d-9d4f-d05a049306bb"
 version: "3.0.1.0"
-targetAbi: "10.11.1.0"
+targetAbi: "10.11.2.0"
 framework: "net9.0"
 overview: "Improved DateAdded handling"
 description: >
