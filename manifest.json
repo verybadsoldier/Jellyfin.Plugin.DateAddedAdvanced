@@ -1,1 +1,20 @@
-[]
+[
+    {
+        "guid": "daed5573-33f9-460d-9d4f-d05a049306bb",
+        "name": "DateAddedAdvanced",
+        "description": "Allows fore more fine-grained control over DateAdded attributes for database entries\n",
+        "overview": "Improved DateAdded handling",
+        "owner": "verybadsoldier",
+        "category": "General",
+        "versions": [
+            {
+                "version": "3.0.2.0",
+                "changelog": "changelog - [aed06b8] update to 10.11.2 - [09fa651] improve versioning, improve jellyfin build.yaml\n",
+                "targetAbi": "10.11.2.0",
+                "sourceUrl": "https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases/download/v3.0.2/dateaddedadvanced_3.0.2.0.zip",
+                "checksum": "e41367af871bc866d272f8c1737f9999",
+                "timestamp": "2025-11-03T21:34:06Z"
+            }
+        ]
+    }
+]
