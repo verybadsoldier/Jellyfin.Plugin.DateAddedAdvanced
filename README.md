@@ -4,9 +4,9 @@
 <img alt="Logo Banner" src="https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>
 </p>
 
-# Usage
+# What is it?
 The function of the plugin is twofold:
-* Primarly, when activating the plugin, the behavior of how Jellyfin handles DateAdded will be changed as described below. There is no additional configuration needed.
+* Primarily, when activating the plugin, the behavior of how Jellyfin handles DateAdded will be changed as described below. There is no additional configuration needed.
 * Secondly, the plugin brings a NFO writer which can be enabled manually per library. To do this, in library settings, you will find a new entry called `NFO DateAdded Creator` in category `Metadata savers`.
 
 In the plugin settings, there are various config parameters available.
@@ -15,7 +15,9 @@ In the plugin settings, there are various config parameters available.
 
 Two methods to install this
 
-## Method #1
+## Method #1 (Preferred)
+
+By this method, Jellyfin will automatically keep the plugin up to date.
 
 1. In your Jellyfin instance add a new plugin repository with this URL:
 ```
@@ -30,19 +32,19 @@ https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases
 
 2. Go to you Jellyfin Data Directory (https://jellyfin.org/docs/general/administration/configuration/)
 3. Go into the `plugins` subdirectory
-4. Create another subdirectory called `DateAddedAdvanced`
+4. Create another subdirectory called `Jellyfin.Plugin.DateAddedAdvanced`
 5. Extract the downloaded ZIP file into that directory
 6. Restart your Jellyfin server
 
 
-# About
+# How it works
 
 This plugin adds advanced capabilities to control the DateAdded property of library items and also fixes one shortcoming of the default Jellyfin behavior.
 By default, Jellyfin uses the created date from file and directory attributes for the DateAdded property. The DateAdded is a useful information worth preserving and the file attributes might get changed unintentionally over the years. So they might get lost when having to reset the Jeyllfin database.
 On Linux, due to the behavior of the .NET framework, Jellyfin is not acquiring the created date correctly and is wrongly reporting modified date instead as reported here:
 https://github.com/jellyfin/jellyfin/issues/10655
 
-With this plugin, the source for the DateAdded property in Jellyfin is changed. The plugin can also store and read DateAdded to and from .nfo files. Also, the bug described above gets fixed when using the plugin and the correct create date is used by Jellyin also on Linux (when supported by the filesystem used).
+With this plugin, the source for the DateAdded property in Jellyfin is changed. The plugin can also store and read DateAdded to and from .nfo files. Also, the bug described above gets fixed when using the plugin and the correct create date is used by Jellyfin also on Linux (when supported by the filesystem used).
 
 When the plugin is installed and a library scan is performed, then this will be happen related to DateAdded properties. When scanning, .nfo files will always have priority over file and directory filesystem attributes. So, when an .nfo file is found, then the `dateadded` node is read and used.
 If no .nfo file is found, then the default behavior of Jellyfin is changed in the following ways:
@@ -77,13 +79,37 @@ Newly created NFO files by this plugin, will only contain `dateadded`. E.g.:
 </album>
 ```
 
-The value of `dateadded` being written to the .nfo files is directly the value from the Jellyfin database ()
-
-### Option: RenameExistingMisformedNfos (available in >= 2.1.0.0)
-It may be the case that when scanning media files there are already existing .nfo files which are not Jellyfin XML files. When using the option `RenameExistingMisformedNfos`, such files will be renamed by appending a `.bak` suffix. Then, a new and proper NFO file can be created to store the `dateadded` information.
+The value of `dateadded` being written to the .nfo files is directly the value from the Jellyfin database.
 
 
-# Build & Installation Process
+# Configuration
+
+There are several configuration options available. You can configure the plugin from the Jellyfin Dashboard. Go to **Dashboard > Plugins** and click on **DateAdded Advanced** to find the settings.
+
+| Name  | Description  | Default |
+|-|-|-|
+| UseSeasonDateForEpisodes  | TV Shows: Use season dates as episode date | true |
+| DateAddedSourceAudio  | Which date source to use for audio (see below) | Created |
+| DateAddedSourceVideo  | Which date source to use for video (see below)  | Created |
+| UpdateExistingNfos  | Update existing NFO files (otherwise only create if not yet existing) |  false  |
+| RenameExistingMisformedNfos  | It may be the case that when scanning media files there are already existing .nfo files which are not Jellyfin XML files. When using the option RenameExistingMisformedNfos, such files will be renamed by appending a .bak suffix. Then, a new and proper NFO file can be created to store the dateadded information. (available in >= 2.1.0.0) |  true   |
+| WriteArtistNfo  | Enable writing of artist.nfo  |   false  |
+| WriteAlbumNfo  | Enable writing of album.nfo  |  true  |
+| WriteSeasonNfo  |  Enable writing of season.nfo |  false  |
+| WriteTvShowNfo  | Enable writing of tvshow.nfo  |  true  |
+| WriteEpisodeNfo  |  Enable writing of [epiosde_name].nfo |  true  |
+| WriteMovieNfo  | Enable writing of [movie_name].nfo  |  true  |
+
+
+## Date Sources
+| Name | Description |
+|-|-|
+| Created | Filesystem attribute "created" |
+| Modified | Filesystem attribute "modified" |
+| Newest | Automatically select the newer timestamp from "created" and "modified" |
+| Oldest | Automatically select the older timestamp from "created" and "modified" |
+
+# Building from Source
 
 1. Clone this repository
 
@@ -95,4 +121,4 @@ It may be the case that when scanning media files there are already existing .nf
 dotnet publish --configuration Release --output bin
 ```
 
-4. Place the resulting `Jellyfin.Plugin.Bookshelf.dll` file in a folder called `plugins/Jellyfin.Plugin.Bookshelf` inside your Jellyfin installation / data directory.
+4. Place the resulting `Jellyfin.Plugin.DateAddedAdvanced.dll` file in a folder called `plugins/Jellyfin.Plugin.DateAddedAdvanced` inside your Jellyfin installation / data directory.
