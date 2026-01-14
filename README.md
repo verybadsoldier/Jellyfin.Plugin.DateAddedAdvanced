@@ -21,7 +21,7 @@ By this method, Jellyfin will automatically keep the plugin up to date.
 
 1. In your Jellyfin instance add a new plugin repository with this URL:
 ```
-https://raw.githubusercontent.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced-Test/refs/heads/repository/manifest.json
+https://raw.githubusercontent.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/refs/heads/repository/manifest.json
 ```
 2. The plugin should appear now in your plugin catalog and you can install it
 
