@@ -35,11 +35,13 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
     {
         private readonly ILogger _logger;
         private readonly DateHelper _dateHelper;
+        private readonly IFileSystem _fileSystem;
 
         public NfoCreateDateProvider(ILibraryManager libraryManager, ILogger<NfoCreateDateProvider> logger, IFileSystem fileSystem)
         {
             _logger = logger;
             _dateHelper = new DateHelper(fileSystem, logger);
+            _fileSystem = fileSystem;
         }
 
         public string Name => "NFO Create Date";
@@ -75,6 +77,13 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                     }
 
                     _logger.LogError("Item.Path is null. This is suspicious. Name: {Name} - Item: {Item}. More Info: {Info}", item.Name, item.ToString(), additionalInfo);
+                    return Task.FromResult(ItemUpdateType.None);
+                }
+
+                // Abort if the underlying media file or folder has been deleted
+                if (!_fileSystem.FileExists(item.Path) && !_fileSystem.DirectoryExists(item.Path))
+                {
+                    _logger.LogInformation("Item path does not exist, skipping metadata fetch: {Path}", item.Path);
                     return Task.FromResult(ItemUpdateType.None);
                 }
 
