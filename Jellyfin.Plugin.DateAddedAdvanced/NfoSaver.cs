@@ -119,6 +119,18 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
         public Task SaveAsync(BaseItem item, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrEmpty(item.Path))
+            {
+                return Task.CompletedTask;
+            }
+
+            // Abort if the underlying media file or folder has been deleted
+            if (!_fileSystem.FileExists(item.Path) && !_fileSystem.DirectoryExists(item.Path))
+            {
+                _logger.LogInformation("NfoSaver: Item path does not exist, skipping NFO save: {Path}", item.Path);
+                return Task.CompletedTask;
+            }
+
             string xmlPath = PathResolver.GetXmlPathInfoForItem(item, false);
 
             if (string.IsNullOrEmpty(xmlPath))
