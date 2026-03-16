@@ -24,14 +24,6 @@
                 "timestamp": "2025-11-03T21:34:06Z"
             },
             {
-                "version": "3.0.0.0",
-                "changelog": "",
-                "targetAbi": "10.10.7.0",
-                "sourceUrl": "https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases/download/v3.0.0/dateaddedadvanced_3.0.0.0.zip",
-                "checksum": "25981035d44df1ae93c96a7809dbeac6",
-                "timestamp": "2025-05-31T10:22:06Z"
-            },
-            {
                 "version": "2.1.1.0",
                 "changelog": "changelog - [5485a7f] fix(linux): dont recreate nfo files for media files deleted on disk already - [5bee5e9] make compatible with 10.10.7 - [a6fae84] improve readme\n",
                 "targetAbi": "10.10.7.0",
