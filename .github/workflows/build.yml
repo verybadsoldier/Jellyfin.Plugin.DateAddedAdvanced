@@ -39,14 +39,17 @@ jobs:
           dotnet-version: "${{ inputs.dotnet-version }}"
 
       - name: Update build.yaml and create changelog
-        if: startsWith(github.ref, 'refs/tags/')
         id: meta
         run: |-
-          # Store the tag (e.g., "v3.0.3") in a variable
-          TAG_WITH_V="${GITHUB_REF#refs/tags/}"
+          # Get the raw git describe string (e.g., "v3.0.3" or "v3.0.3-5-g1234abc")
+          RAW_DESC=$(git describe --tags)
           
-          # Create a new variable with the "v" prefix removed (e.g., "3.0.3")
-          CLEAN_VERSION="${TAG_WITH_V#v}"
+          # Remove the leading 'v' if present (e.g., "3.0.3-5-g1234abc")
+          DESC_NO_V="${RAW_DESC#v}"
+          
+          # Split the string at the first hyphen to get just the pure version number (e.g., "3.0.3")
+          # This ensures JPRM gets a valid semantic version even on branch builds
+          CLEAN_VERSION="${DESC_NO_V%%-*}"
           
           # This makes the ${CLEAN_VERSION} available to all later steps
           echo "CLEAN_VERSION=${CLEAN_VERSION}" >> $GITHUB_ENV
@@ -55,15 +58,27 @@ jobs:
           echo "version=${CLEAN_VERSION}" >> $GITHUB_OUTPUT
           
           echo "Set version in build.yaml to ${CLEAN_VERSION}"
-          sed -i "s/version: .*/version: '${CLEAN_VERSION}'/" ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
+          sed -i "s|^version: .*|version: '${CLEAN_VERSION}'|" ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
+
+          # Use input if available, otherwise default to net8.0 to prevent empty strings on push events
+          DOTNET_TARGET="${{ inputs.dotnet-target || 'net8.0' }}"
+          echo "Setting framework to ${DOTNET_TARGET} in build.yaml"
+          sed -i "s|^framework: .*|framework: \"${DOTNET_TARGET}\"|" ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
           
-          COMMIT_RANGE=$(git describe --tags --abbrev=0 @^)..@
+          # Safely generate changelog by grabbing the previous tag relative to the current commit
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)
+          COMMIT_RANGE="${PREV_TAG}..HEAD"
+          
           echo "Generate changelog for commit range ${COMMIT_RANGE}"
           CHANGELOG=$(git log "$COMMIT_RANGE" --oneline --pretty=format:"- [%h] %s")
           
           echo "Inject changelog into build.yaml"
-          sed -i 's/changelog: changelog/changelog: |-\n/' ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
+          # Changed sed delimiter to ~ here to avoid colliding with the | in YAML's |- syntax
+          sed -i 's~^changelog: .*~changelog: |-\n~' ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
           echo -e "$CHANGELOG" | sed 's/^/  /' >> ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
+          
+          echo "Content of build.yaml:"
+          cat ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
           
           echo "Create changelog artifact"
           mkdir -p ./artifacts
@@ -80,8 +95,8 @@ jobs:
       - name: Generate Artifact Name
         id: git_info
         run: |
-          # Use git describe to generate a meaningful name, fallback to 'always' if no tags exist
-          DESC=$(git describe --tags --always)
+          # Use git describe to generate a meaningful name
+          DESC=$(git describe --tags)
           echo "artifact_name=build-artifact-${DESC}" >> $GITHUB_OUTPUT
           
       - name: Upload Artifact
