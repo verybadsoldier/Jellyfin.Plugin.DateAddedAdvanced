@@ -37,6 +37,16 @@ https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases
 6. Restart your Jellyfin server
 
 
+# Jellyfin Version Compatibility
+
+Following versions are available to support different Jellyfin major versions:
+| Jellyfin Version   |      Plugin Version|
+|----------|:----------------------------:|
+| 10.10.x  |    2.x                       |
+| 10.11.x  |    3.x                       |
+
+When downloading from Jellyfin using the integrated Plugin Catalog then the correct plugin version should be picked automatically.
+
 # How it works
 
 This plugin adds advanced capabilities to control the DateAdded property of library items and also fixes one shortcoming of the default Jellyfin behavior.
