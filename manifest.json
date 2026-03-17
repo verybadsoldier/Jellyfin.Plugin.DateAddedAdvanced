@@ -8,6 +8,14 @@
         "category": "General",
         "versions": [
             {
+                "version": "3.1.0.0",
+                "changelog": "\nchangelog\n- [1a8718a] Merge branch 'main' into v10.10.x\n- [e093744] chore(gh_actions): use .net version from the project file\n- [1bbaa73] chore: automatically fill .net target in build.yaml",
+                "targetAbi": "10.10.7.0",
+                "sourceUrl": "https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases/download/v3.1.0/dateaddedadvanced_3.1.0.0.zip",
+                "checksum": "2c7bd73bcc502c19a82d9d2f4850a1cf",
+                "timestamp": "2026-03-17T21:10:34Z"
+            },
+            {
                 "version": "3.0.3.0",
                 "changelog": "changelog - [58a0e15] fix(linux): dont recreate nfo files for media files deleted on disk already - [ef38edc] Update wrong plugin repository URL in README - [02cf136] only publish the ZIP and the changelog as artifacts - [a6fae84] improve readme\n",
                 "targetAbi": "10.11.2.0",
