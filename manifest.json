@@ -24,6 +24,14 @@
                 "timestamp": "2025-11-03T21:34:06Z"
             },
             {
+                "version": "2.2.0.0",
+                "changelog": "\nchangelog\n- [436ea41] chore: automatically fill .net target in build.yaml\n- [c0e37e9] make compatible with 10.10.7\n- [794720c] chore(gh-workflow): assign proper artifact name",
+                "targetAbi": "10.10.7.0",
+                "sourceUrl": "https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases/download/v2.2.0/dateaddedadvanced_2.2.0.0.zip",
+                "checksum": "b8cc740e323a97a86031e7ce7f77a9a2",
+                "timestamp": "2026-03-17T20:23:33Z"
+            },
+            {
                 "version": "2.1.1.0",
                 "changelog": "changelog - [5485a7f] fix(linux): dont recreate nfo files for media files deleted on disk already - [5bee5e9] make compatible with 10.10.7 - [a6fae84] improve readme\n",
                 "targetAbi": "10.10.7.0",
