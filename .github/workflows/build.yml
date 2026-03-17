@@ -9,17 +9,6 @@ on:
     branches: [ "main" ]
   
   workflow_dispatch:
-    inputs:
-      dotnet-version:
-        required: false
-        default: "9.0.x"
-        description: "The .NET version to setup for the build"
-        type: string
-      dotnet-target:
-        required: false
-        default: "net9.0"
-        description: "The .NET target to set for JPRM"
-        type: string
 
 jobs:
   build:
@@ -33,10 +22,34 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+
+      - name: Extract .NET version from csproj
+        id: extract_dotnet
+        run: |
+          CSPROJ_PATH="./Jellyfin.Plugin.DateAddedAdvanced/Jellyfin.Plugin.DateAddedAdvanced.csproj"
+          
+          # Extract the TargetFramework value (e.g., "net9.0")
+          TARGET_FRAMEWORK=$(grep -oP '(?<=<TargetFramework>)[^<]+' "$CSPROJ_PATH")
+          
+          if [ -z "$TARGET_FRAMEWORK" ]; then
+            echo "Error: Could not extract TargetFramework from $CSPROJ_PATH"
+            exit 1
+          fi
+          
+          echo "Found TargetFramework: $TARGET_FRAMEWORK"
+          
+          # Format the version for setup-dotnet (e.g., "net9.0" becomes "9.0.x")
+          VERSION_NUM="${TARGET_FRAMEWORK#net}"
+          DOTNET_VERSION="${VERSION_NUM}.x"
+          
+          # Export to GITHUB_ENV for subsequent steps
+          echo "DOTNET_TARGET=${TARGET_FRAMEWORK}" >> $GITHUB_ENV
+          echo "DOTNET_VERSION=${DOTNET_VERSION}" >> $GITHUB_ENV
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "${{ inputs.dotnet-version }}"
+          dotnet-version: "${{ env.DOTNET_VERSION }}"
 
       - name: Update build.yaml and create changelog
         id: meta
@@ -60,8 +73,6 @@ jobs:
           echo "Set version in build.yaml to ${CLEAN_VERSION}"
           sed -i "s|^version: .*|version: '${CLEAN_VERSION}'|" ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
 
-          # Use input if available, otherwise default to net8.0 to prevent empty strings on push events
-          DOTNET_TARGET="${{ inputs.dotnet-target || 'net8.0' }}"
           echo "Setting framework to ${DOTNET_TARGET} in build.yaml"
           sed -i "s|^framework: .*|framework: \"${DOTNET_TARGET}\"|" ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
           
@@ -73,7 +84,6 @@ jobs:
           CHANGELOG=$(git log "$COMMIT_RANGE" --oneline --pretty=format:"- [%h] %s")
           
           echo "Inject changelog into build.yaml"
-          # Changed sed delimiter to ~ here to avoid colliding with the | in YAML's |- syntax
           sed -i 's~^changelog: .*~changelog: |-\n~' ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
           echo -e "$CHANGELOG" | sed 's/^/  /' >> ./Jellyfin.Plugin.DateAddedAdvanced/build.yaml
           
@@ -88,7 +98,7 @@ jobs:
         uses: oddstr13/jellyfin-plugin-repository-manager@9497a0a499416cc572ed2e07a391d9f943a37b4d # v1.1.1
         id: jprm
         with:
-          dotnet-target: "${{ inputs.dotnet-target }}"
+          dotnet-target: "${{ env.DOTNET_TARGET }}"
           path: './Jellyfin.Plugin.DateAddedAdvanced'
           output: './artifacts'
 
@@ -146,9 +156,9 @@ jobs:
       - build
       - gh_release
     runs-on: ubuntu-latest
-    permissions: # Job-level permissions configuration starts here
-      contents: write         # 'write' access to repository contents
-      pull-requests: write    # 'write' access to pull requests
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
