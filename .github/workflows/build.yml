@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.meta.outputs.version }}
+      artifact_name: ${{ steps.git_info.outputs.artifact_name }}
     env:
       PIP_BREAK_SYSTEM_PACKAGES: "true" # added this for local "act" run
     steps:
@@ -75,11 +76,18 @@ jobs:
           dotnet-target: "${{ inputs.dotnet-target }}"
           path: './Jellyfin.Plugin.DateAddedAdvanced'
           output: './artifacts'
-        
+
+      - name: Generate Artifact Name
+        id: git_info
+        run: |
+          # Use git describe to generate a meaningful name, fallback to 'always' if no tags exist
+          DESC=$(git describe --tags --always)
+          echo "artifact_name=build-artifact-${DESC}" >> $GITHUB_OUTPUT
+          
       - name: Upload Artifact
         uses: actions/upload-artifact@v5
         with:
-          name: build-artifact
+          name: ${{ steps.git_info.outputs.artifact_name }}
           if-no-files-found: error
           path: |
             ./artifacts/changelog.md
@@ -96,7 +104,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v5
         with:
-          name: build-artifact
+          name: ${{ needs.build.outputs.artifact_name }}
 
       - name: Prepare GH Release Assets
         # move changelog to not include it in the release, only use as bodyFile for release description
@@ -136,7 +144,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v5
         with:
-          name: build-artifact
+          name: ${{ needs.build.outputs.artifact_name }}
 
       - name: Update manifest.json
         run: |-
