@@ -1,6 +1,6 @@
 [
     {
-        "guid": "daed5573-33f9-460d-9d4f-d05a049306bb",
+        "guid": "c31ce313-d3d3-4a93-ad6d-8b235a9c2078",
         "name": "DateAddedAdvanced",
         "description": "Allows fore more fine-grained control over DateAdded attributes for database entries\n",
         "overview": "Improved DateAdded handling",
