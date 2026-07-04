@@ -175,14 +175,26 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                 return Task.CompletedTask;
             }
 
-            var newValue = item.DateCreated.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            string newValue;
             if (!fileExists)
             {
-                _logger.LogInformation("Creating NFO file: {Path}", xmlPath);
+                var resolvedDate = _dateHelper.ResolveDateCreatedFromFile(item);
+                if (resolvedDate.HasValue)
+                {
+                    newValue = resolvedDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                    item.DateCreated = resolvedDate.Value;
+                }
+                else
+                {
+                    newValue = item.DateCreated.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                }
+
+                _logger.LogInformation("Creating NFO file: {Path} with date: {Date}", xmlPath, newValue);
                 CreateXmlFile(xmlPath, rootname, newValue);
             }
             else
             {
+                newValue = item.DateCreated.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                 // we already checked if the file is misformed XML, so we can update it
                 _logger.LogInformation("Updating NFO file: {Path} with date: {Date}", xmlPath, newValue);
                 UpdateXmlFile(xmlPath, rootname, newValue);
