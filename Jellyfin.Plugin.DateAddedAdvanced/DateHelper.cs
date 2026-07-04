@@ -67,6 +67,14 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
         private DateTime GetDateCreatedFromFile(FileSystemMetadata metaData, BaseItem item)
         {
+            DateSource source = item is Video ? Plugin.Instance.Configuration.DateAddedSourceVideo : Plugin.Instance.Configuration.DateAddedSourceAudio;
+            if (source == DateSource.Current)
+            {
+                var now = DateTime.UtcNow;
+                _logger.LogInformation("DateSource: {Source} - Value: {Value}. Path: {Path}", source, now, item.Path);
+                return now;
+            }
+
             var write = _fileSystem.GetLastWriteTimeUtc(metaData);
             DateTime create = default;
 
@@ -90,7 +98,6 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             }
 
             DateTime dt = DateTime.MinValue;
-            DateSource source = item is Video ? Plugin.Instance.Configuration.DateAddedSourceVideo : Plugin.Instance.Configuration.DateAddedSourceAudio;
             switch (source)
             {
                 case DateSource.Modified:

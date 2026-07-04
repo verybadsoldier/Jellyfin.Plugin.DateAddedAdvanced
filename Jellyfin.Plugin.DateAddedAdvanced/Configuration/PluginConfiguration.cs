@@ -29,6 +29,7 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration
             Created,
             Oldest,
             Newest,
+            Current,
         }
 
         /// <summary>
