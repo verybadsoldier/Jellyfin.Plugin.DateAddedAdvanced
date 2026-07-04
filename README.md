@@ -55,6 +55,7 @@ It can be configured which file date should be used:
 * Modification date
 * Oldest from creation and modification date
 * Newest from creation and modification date
+* Current time
 
 Reasoning is that for files that do not get changed (movies, TV show episodes), the modified date is quite stable and usually does not change on the filesystem. So, even after years the modification date might be the date the file was added to your collection.
 For files that do change (e.g. music files due to re-tagging), the modified date usually does not tell when this file was added to your collection.
@@ -108,6 +109,7 @@ There are several configuration options available. You can configure the plugin 
 | Modified | Filesystem attribute "modified" |
 | Newest | Automatically select the newer timestamp from "created" and "modified" |
 | Oldest | Automatically select the older timestamp from "created" and "modified" |
+| Current | Current time |
 
 # Building from Source
 
