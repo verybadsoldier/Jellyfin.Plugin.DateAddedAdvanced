@@ -57,7 +57,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                             return null;
                         }
 
-                        return DateTimeOffset.FromUnixTimeSeconds(birthTimeUnix).DateTime;
+                        return DateTimeOffset.FromUnixTimeSeconds(birthTimeUnix).UtcDateTime;
                     }
                 }
             }
