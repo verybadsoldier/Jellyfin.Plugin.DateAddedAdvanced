@@ -8,6 +8,14 @@
         "category": "General",
         "versions": [
             {
+                "version": "3.4.0.0",
+                "changelog": "\nchangelog\n- [4e591a4] Merge pull request #4 from verybadsoldier/fix-new-file-date-added-17187766110672776454\n- [5fc1cff] Updated `NfoCreateDateProvider` to properly fallback and compute the date source when `dateadded` is missing from an XML rather than simply returning None.\n- [0d52fa4] Merge pull request #5 from verybadsoldier/dev_utc-datetime\n- [c1e24ef] truncate created timestamps to full seconds (remove milliseconds) because we read/write only seconds resolution to nfo file\n- [c4c4713] unify datetime values to UTC and add also time to the date",
+                "targetAbi": "10.11.2.0",
+                "sourceUrl": "https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases/download/v3.4.0/dateaddedadvanced_3.4.0.0.zip",
+                "checksum": "772d8f86af3e85001d7feca63a7d4aac",
+                "timestamp": "2026-07-17T19:34:53Z"
+            },
+            {
                 "version": "3.3.1.0",
                 "changelog": "\nchangelog\n- [02deb2e] fix: nfo writer not using our internal date logic but jellyfin's logic",
                 "targetAbi": "10.11.2.0",
