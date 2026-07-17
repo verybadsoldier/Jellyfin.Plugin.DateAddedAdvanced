@@ -125,7 +125,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                     }
 
                     DateTime parsedDate;
-                    if (!DateTime.TryParse(dateadded, out parsedDate))
+                    if (!DateTime.TryParse(dateadded, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out parsedDate))
                     {
                         _logger.LogError("Error parsing createddata: {DateAdded}", dateadded);
                         return Task.FromResult(ItemUpdateType.None);
