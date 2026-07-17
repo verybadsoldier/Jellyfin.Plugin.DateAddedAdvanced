@@ -65,12 +65,18 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             throw new InvalidOperationException("Failed to retrieve birth time");
         }
 
+        private DateTime TruncateToSeconds(DateTime date)
+        {
+            // set milliseconds to 0 because we only save/load seconds resolution to/from file (but JF stores milliseconds)
+            return new DateTime(date.Ticks - (date.Ticks % TimeSpan.TicksPerSecond), date.Kind);
+        }
+
         private DateTime GetDateCreatedFromFile(FileSystemMetadata metaData, BaseItem item)
         {
             DateSource source = item is Video ? Plugin.Instance.Configuration.DateAddedSourceVideo : Plugin.Instance.Configuration.DateAddedSourceAudio;
             if (source == DateSource.Current)
             {
-                var now = DateTime.UtcNow;
+                var now = TruncateToSeconds(DateTime.UtcNow);
                 _logger.LogInformation("DateSource: {Source} - Value: {Value}. Path: {Path}", source, now, item.Path);
                 return now;
             }
@@ -113,6 +119,8 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                     dt = write < create ? write : create;
                     break;
             }
+
+            dt = TruncateToSeconds(dt);
 
             _logger.LogInformation("DateSource: {Source} - Value: {Value}. Path: {Path}", source, dt, item.Path);
 
