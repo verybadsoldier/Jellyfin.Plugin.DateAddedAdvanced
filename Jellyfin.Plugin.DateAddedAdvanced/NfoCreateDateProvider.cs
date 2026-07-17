@@ -121,17 +121,19 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
                     if (dateadded == null)
                     {
-                        return Task.FromResult(ItemUpdateType.None);
+                        newDate = _dateHelper.ResolveDateCreatedFromFile(item);
                     }
-
-                    DateTime parsedDate;
-                    if (!DateTime.TryParse(dateadded, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out parsedDate))
+                    else
                     {
-                        _logger.LogError("Error parsing createddata: {DateAdded}", dateadded);
-                        return Task.FromResult(ItemUpdateType.None);
-                    }
+                        DateTime parsedDate;
+                        if (!DateTime.TryParse(dateadded, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out parsedDate))
+                        {
+                            _logger.LogError("Error parsing createddata: {DateAdded}", dateadded);
+                            return Task.FromResult(ItemUpdateType.None);
+                        }
 
-                    newDate = parsedDate;
+                        newDate = parsedDate;
+                    }
                 }
 
                 if (item.DateCreated != newDate && newDate != null)
