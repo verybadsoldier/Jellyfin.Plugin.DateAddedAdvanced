@@ -115,9 +115,9 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                         return Task.FromResult(ItemUpdateType.None);
                     }
 
-                    _logger.LogWarning("Reading XML file: {Item}", xmlpath);
+                    _logger.LogInformation("Reading XML file: {Item}", xmlpath);
                     string dateadded = ReadDateAdded(xmlpath, rootname);
-                    _logger.LogWarning("Reading XML file Result: {Item}", dateadded);
+                    _logger.LogInformation("Reading XML file Result: {Item}", dateadded);
 
                     if (dateadded == null)
                     {
