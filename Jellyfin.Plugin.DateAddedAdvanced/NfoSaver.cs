@@ -169,34 +169,53 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                 }
             }
 
-            if (fileExists && !Plugin.Instance.Configuration.UpdateExistingNfos)
+            string? existingDateAdded = null;
+            if (fileExists)
             {
-                _logger.LogInformation("Not updating existing NFO due to config option: {Xml}", xmlPath);
+                existingDateAdded = NfoCreateDateProvider.ReadDateAdded(xmlPath, rootname);
+            }
+
+            bool hasExistingDateAdded = !string.IsNullOrWhiteSpace(existingDateAdded);
+
+            // If the NFO already has a dateadded tag, do not overwrite it.
+            if (hasExistingDateAdded)
+            {
+                _logger.LogInformation("Not updating existing NFO because it already contains dateadded: {Xml}", xmlPath);
                 return Task.CompletedTask;
             }
 
+            // The NFO file exists but has no dateadded tag. Check if configured to add it.
+            if (fileExists && !Plugin.Instance.Configuration.AddDateToExistingNfos)
+            {
+                _logger.LogInformation("Not adding dateadded to existing NFO '{Xml}' due to AddDateToExistingNfos configuration.", xmlPath);
+                return Task.CompletedTask;
+            }
+
+            // Resolve the date directly from file attributes rather than blindly trusting item.DateCreated.
+            // When Jellyfin scans a new item, item.DateCreated is initially defaulted to the current scan time (UtcNow).
+            // If NfoSaver runs before NfoCreateDateProvider has resolved the date, writing item.DateCreated would permanently
+            // bake that scan time into the NFO file, which would never be updated again. Resolving here guarantees that
+            // the timestamp written to the NFO adheres to the configured plugin date rules.
             string newValue;
+            var resolvedDate = _dateHelper.ResolveDateCreatedFromFile(item);
+            if (resolvedDate.HasValue)
+            {
+                newValue = resolvedDate.Value.ToString("yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture);
+                item.DateCreated = resolvedDate.Value;
+            }
+            else
+            {
+                newValue = item.DateCreated.ToString("yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture);
+            }
+
             if (!fileExists)
             {
-                var resolvedDate = _dateHelper.ResolveDateCreatedFromFile(item);
-                if (resolvedDate.HasValue)
-                {
-                    newValue = resolvedDate.Value.ToString("yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture);
-                    item.DateCreated = resolvedDate.Value;
-                }
-                else
-                {
-                    newValue = item.DateCreated.ToString("yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture);
-                }
-
                 _logger.LogInformation("Creating NFO file: {Path} with date: {Date}", xmlPath, newValue);
                 CreateXmlFile(xmlPath, rootname, newValue);
             }
             else
             {
-                newValue = item.DateCreated.ToString("yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture);
-                // we already checked if the file is misformed XML, so we can update it
-                _logger.LogInformation("Updating NFO file: {Path} with date: {Date}", xmlPath, newValue);
+                _logger.LogInformation("Adding dateadded to existing NFO file: {Path} with date: {Date}", xmlPath, newValue);
                 UpdateXmlFile(xmlPath, rootname, newValue);
             }
 

@@ -153,11 +153,11 @@
 
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
-                                <input is="emby-checkbox" type="checkbox" id="updateExistingNfos" class="emby-checkbox" />
-                                <span class="checkboxLabel">Update existing NFO files</span>
+                                <input is="emby-checkbox" type="checkbox" id="addDateToExistingNfos" class="emby-checkbox" />
+                                <span class="checkboxLabel">Add Date Added to existing NFO files</span>
                             </label>
                             <div class="fieldDescription checkboxFieldDescription">
-                                When disabled, existing NFO files will never be modified. When enabled, existing NFO files will have their dateadded value updated.
+                                When enabled, adds the &lt;dateadded&gt; tag to existing NFO files if it is missing. Existing timestamps are always preserved. When disabled, existing NFO files will never be modified.
                             </div>
                         </div>
 
@@ -246,7 +246,7 @@
                 .addEventListener('pageshow', function () {
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
                         document.querySelector('#useSeasonDateAsEpisodeDate').checked = config.UseSeasonDateForEpisodes;
-                        document.querySelector('#updateExistingNfos').checked = config.UpdateExistingNfos;
+                        document.querySelector('#addDateToExistingNfos').checked = config.AddDateToExistingNfos;
                         document.querySelector('#renameExistingMisformedNfos').checked = config.RenameExistingMisformedNfos;
 
                         document.querySelector('#writeArtistNfo').checked = config.WriteArtistNfo;
@@ -280,7 +280,7 @@
 
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
                         config.UseSeasonDateForEpisodes = document.querySelector('#useSeasonDateAsEpisodeDate').checked;
-                        config.UpdateExistingNfos = document.querySelector('#updateExistingNfos').checked;
+                        config.AddDateToExistingNfos = document.querySelector('#addDateToExistingNfos').checked;
                         config.RenameExistingMisformedNfos = document.querySelector('#renameExistingMisformedNfos').checked;
                         config.DateAddedSourceAudio = document.querySelector('#selectDateSourceAudio').value;
                         config.DateAddedSourceVideo = document.querySelector('#selectDateSourceVideo').value;

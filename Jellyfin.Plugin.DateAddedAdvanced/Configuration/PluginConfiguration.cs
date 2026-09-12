@@ -13,7 +13,7 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration
             UseSeasonDateForEpisodes = true;
             DateAddedSourceAudio = DateSource.Created;
             DateAddedSourceVideo = DateSource.Created;
-            UpdateExistingNfos = false;
+            AddDateToExistingNfos = true;
             RenameExistingMisformedNfos = true;
             WriteArtistNfo = false;
             WriteAlbumNfo = true;
@@ -38,9 +38,19 @@ namespace MediaBrowser.Providers.Plugins.NfoCreateDate.Configuration
         public bool UseSeasonDateForEpisodes { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether existing nfo files should be updated.
+        /// Gets or sets a value indicating whether dateadded should be added to existing nfo files when missing.
         /// </summary>
-        public bool UpdateExistingNfos { get; set; }
+        public bool AddDateToExistingNfos { get; set; }
+
+        /// <summary>
+        /// Legacy property kept for backward compatibility with older configuration files.
+        /// </summary>
+        [System.Obsolete("Use AddDateToExistingNfos instead.")]
+        public bool UpdateExistingNfos
+        {
+            get => AddDateToExistingNfos;
+            set => AddDateToExistingNfos = value;
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether existing nfo files should be renamed to.bak file if misformed.

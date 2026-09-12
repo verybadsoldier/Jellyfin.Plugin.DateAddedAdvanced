@@ -48,16 +48,23 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
         public static string ReadDateAdded(string filepath, string rootname)
         {
-            XmlDocument doc = new XmlDocument();
-            doc.Load(filepath);
+            try
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.Load(filepath);
 
-            XmlNode node = doc.DocumentElement.SelectSingleNode($"/{rootname}/dateadded");
-            if (node == null)
+                XmlNode node = doc.DocumentElement?.SelectSingleNode($"/{rootname}/dateadded");
+                if (node == null)
+                {
+                    return null;
+                }
+
+                return node.InnerText;
+            }
+            catch
             {
                 return null;
             }
-
-            return node.InnerText;
         }
 
         private Task<ItemUpdateType> FetchAsyncInternal(BaseItem item, MetadataRefreshOptions options, CancellationToken cancellationToken)

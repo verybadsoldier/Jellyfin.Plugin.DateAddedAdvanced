@@ -92,7 +92,7 @@ There are several configuration options available. You can configure the plugin 
 | UseSeasonDateForEpisodes  | TV Shows: Use season dates as episode date | true |
 | DateAddedSourceAudio  | Which date source to use for audio (see below) | Created |
 | DateAddedSourceVideo  | Which date source to use for video (see below)  | Created |
-| UpdateExistingNfos  | Update existing NFO files (otherwise only create if not yet existing) |  false  |
+| AddDateToExistingNfos  | Add `<dateadded>` to existing NFO files when missing (existing timestamps are always preserved) |  true  |
 | RenameExistingMisformedNfos  | It may be the case that when scanning media files there are already existing .nfo files which are not Jellyfin XML files. When using the option RenameExistingMisformedNfos, such files will be renamed by appending a .bak suffix. Then, a new and proper NFO file can be created to store the dateadded information. (available in >= 2.1.0.0) |  true   |
 | WriteArtistNfo  | Enable writing of artist.nfo  |   false  |
 | WriteAlbumNfo  | Enable writing of album.nfo  |  true  |
