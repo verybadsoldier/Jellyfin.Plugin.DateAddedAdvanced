@@ -1,73 +1,242 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>NFO DateAdded Advanced</title>
+    <title>DateAdded Advanced</title>
 </head>
 <body>
-    <div data-role="page" class="page type-interior pluginConfigurationPage configPage" data-require="emby-input,emby-button,emby-checkbox">
+    <div data-role="page" class="page type-interior pluginConfigurationPage configPage dateAddedConfigPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+        <style>
+            .dateAddedConfigPage {
+                max-width: 50em;
+                margin: 0 auto;
+                padding-bottom: 3em;
+            }
+
+            .dateAddedConfigPage .verticalSection {
+                margin-bottom: 2.25em;
+            }
+
+            .dateAddedConfigPage .sectionTitleContainer {
+                margin-bottom: 0.5em;
+            }
+
+            .dateAddedConfigPage .sectionTitle {
+                font-size: 1.35em;
+                font-weight: 500;
+                margin: 0;
+            }
+
+            .dateAddedConfigPage .selectContainer {
+                margin-bottom: 1.25em;
+            }
+
+            .dateAddedConfigPage .selectLabel {
+                display: block;
+                font-size: 0.9em;
+                margin-bottom: 0.35em;
+            }
+
+            .dateAddedConfigPage .fieldDescription {
+                font-size: 0.88em;
+                color: rgba(255, 255, 255, 0.6);
+                margin-top: 0.35em;
+                line-height: 1.4;
+            }
+
+            .dateAddedConfigPage .checkboxContainer {
+                margin-bottom: 0.75em;
+            }
+
+            .dateAddedConfigPage .checkboxContainer-withDescription {
+                margin-bottom: 1.35em;
+            }
+
+            .dateAddedConfigPage .emby-checkbox-label {
+                display: inline-flex;
+                align-items: center;
+                cursor: pointer;
+                user-select: none;
+            }
+
+            .dateAddedConfigPage .emby-checkbox,
+            .dateAddedConfigPage input[type="checkbox"] {
+                width: 18px !important;
+                height: 18px !important;
+                min-width: 18px !important;
+                min-height: 18px !important;
+                margin: 0 0.65em 0 0 !important;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            .dateAddedConfigPage .checkboxFieldDescription {
+                margin-left: 2.1em;
+                margin-top: 0.25em;
+            }
+
+            .dateAddedConfigPage .nfoWritersGrid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 0.75em 1.5em;
+                margin-top: 0.5em;
+            }
+
+            .dateAddedConfigPage .nfoWritersGrid .checkboxContainer {
+                margin-bottom: 0.25em;
+            }
+
+            .dateAddedConfigPage .btnSubmitContainer {
+                margin-top: 2.5em;
+            }
+        </style>
+
         <div data-role="content">
             <div class="content-primary">
                 <form class="configForm">
-                    <label class="checkboxContainer">
-                        <input is="emby-input" type="checkbox" id="useSeasonDateAsEpisodeDate" />
-                        <span>TV Shows: Use season dates as episode date</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-input" type="checkbox" id="updateExistingNfos" />
-                        <span>Update existing NFO files (otherwise only create if not yet existing)</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-input" type="checkbox" id="renameExistingMisformedNfos" />
-                        <span>Rename foreign or misformed existing NFO files to .bak (then create proper ones)</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-input" type="checkbox" id="writeArtistNfo" />
-                        <span>Enable writing of artist.nfo</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-input" type="checkbox" id="writeAlbumNfo" />
-                        <span>Enable writing of album.nfo</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-input" type="checkbox" id="writeSeasonNfo" />
-                        <span>Enable writing of season.nfo</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-input" type="checkbox" id="writeTvShowNfo" />
-                        <span>Enable writing of tvshow.nfo</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-input" type="checkbox" id="writeEpisodeNfo" />
-                        <span>Enable writing of [epiosde_name].nfo</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-input" type="checkbox" id="writeMovieNfo" />
-                        <span>Enable writing of [movie_name].nfo</span>
-                    </label>
-                    <div class="selectContainer">
-                        <select is="emby-select" id="selectDateSourceAudio" label="DateAdded Source Audio">
-                            <option value="Created">Created</option>
-                            <option value="Modified">Modified</option>
-                            <option value="Newest">Newest</option>
-                            <option value="Oldest">Oldest</option>
-                            <option value="Current">Current</option>
-                        </select>
+
+                    <!-- Section 1: Date Sources -->
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer">
+                            <h2 class="sectionTitle">Date Added Sources</h2>
+                        </div>
+                        <div class="fieldDescription" style="margin-bottom: 1.25em;">
+                            Choose which file timestamp is used for the Date Added property when scanning items without an existing NFO file.
+                        </div>
+
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="selectDateSourceVideo">DateAdded source for videos</label>
+                            <select is="emby-select" id="selectDateSourceVideo" class="emby-select-withcolor emby-select">
+                                <option value="Created">Created (file creation timestamp)</option>
+                                <option value="Modified">Modified (file modification timestamp)</option>
+                                <option value="Oldest">Oldest (earlier of created and modified)</option>
+                                <option value="Newest">Newest (later of created and modified)</option>
+                                <option value="Current">Current (date of scan)</option>
+                            </select>
+                            <div class="fieldDescription">Applies to movies and TV episodes.</div>
+                        </div>
+
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="selectDateSourceAudio">DateAdded source for audio</label>
+                            <select is="emby-select" id="selectDateSourceAudio" class="emby-select-withcolor emby-select">
+                                <option value="Created">Created (file creation timestamp)</option>
+                                <option value="Modified">Modified (file modification timestamp)</option>
+                                <option value="Oldest">Oldest (earlier of created and modified)</option>
+                                <option value="Newest">Newest (later of created and modified)</option>
+                                <option value="Current">Current (date of scan)</option>
+                            </select>
+                            <div class="fieldDescription">Applies to music albums and songs.</div>
+                        </div>
                     </div>
-                    <div class="selectContainer">
-                        <select is="emby-select" id="selectDateSourceVideo" label="DateAdded Source Video">
-                            <option value="Created">Created</option>
-                            <option value="Modified">Modified</option>
-                            <option value="Newest">Newest</option>
-                            <option value="Oldest">Oldest</option>
-                            <option value="Current">Current</option>
-                        </select>
+
+                    <!-- Section 2: TV Shows -->
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer">
+                            <h2 class="sectionTitle">TV Shows</h2>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input is="emby-checkbox" type="checkbox" id="useSeasonDateAsEpisodeDate" class="emby-checkbox" />
+                                <span class="checkboxLabel">Use season dates as episode date</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                When enabled, episodes inherit their Date Added timestamp from season.nfo or the oldest episode in that season.
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
+
+                    <!-- Section 3: NFO File Handling -->
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer">
+                            <h2 class="sectionTitle">NFO File Handling</h2>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input is="emby-checkbox" type="checkbox" id="updateExistingNfos" class="emby-checkbox" />
+                                <span class="checkboxLabel">Update existing NFO files</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                When disabled, existing NFO files will never be modified. When enabled, existing NFO files will have their dateadded value updated.
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input is="emby-checkbox" type="checkbox" id="renameExistingMisformedNfos" class="emby-checkbox" />
+                                <span class="checkboxLabel">Rename foreign or misformed NFO files to .bak</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                If an existing NFO file is invalid XML or missing the expected root element, rename it to .bak before creating a clean NFO file.
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Section 4: NFO Writers -->
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer">
+                            <h2 class="sectionTitle">Metadata Savers (NFO Writers)</h2>
+                        </div>
+                        <div class="fieldDescription">
+                            Enable writing of .nfo files containing the dateadded timestamp for selected media types.
+                        </div>
+
+                        <div class="nfoWritersGrid">
+                            <div class="checkboxContainer">
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="writeMovieNfo" class="emby-checkbox" />
+                                    <span class="checkboxLabel">Enable writing of [movie_name].nfo</span>
+                                </label>
+                            </div>
+
+                            <div class="checkboxContainer">
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="writeTvShowNfo" class="emby-checkbox" />
+                                    <span class="checkboxLabel">Enable writing of tvshow.nfo</span>
+                                </label>
+                            </div>
+
+                            <div class="checkboxContainer">
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="writeSeasonNfo" class="emby-checkbox" />
+                                    <span class="checkboxLabel">Enable writing of season.nfo</span>
+                                </label>
+                            </div>
+
+                            <div class="checkboxContainer">
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="writeEpisodeNfo" class="emby-checkbox" />
+                                    <span class="checkboxLabel">Enable writing of [episode_name].nfo</span>
+                                </label>
+                            </div>
+
+                            <div class="checkboxContainer">
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="writeAlbumNfo" class="emby-checkbox" />
+                                    <span class="checkboxLabel">Enable writing of album.nfo</span>
+                                </label>
+                            </div>
+
+                            <div class="checkboxContainer">
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="writeArtistNfo" class="emby-checkbox" />
+                                    <span class="checkboxLabel">Enable writing of artist.nfo</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Action Button -->
+                    <div class="btnSubmitContainer">
+                        <button is="emby-button" type="submit" class="raised button-submit block">
+                            <span>Save</span>
+                        </button>
+                    </div>
+
                 </form>
             </div>
         </div>
+
         <script type="text/javascript">
             var PluginConfig = {
                 pluginId: "c31ce313-d3d3-4a93-ad6d-8b235a9c2078"
