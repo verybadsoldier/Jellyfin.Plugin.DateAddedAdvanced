@@ -141,7 +141,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
 
             bool fileExists = File.Exists(xmlPath);
 
-            string? rootname = PathResolver.GetXmlRootNodeName(item);
+            string? rootname = PathResolver.GetXmlRootNodeName(item, modeRead: false);
 
             if (string.IsNullOrEmpty(rootname))
             {

@@ -114,7 +114,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
                 {
                     _logger.LogInformation("Found xml file: {XmlPath}", xmlpath);
 
-                    string rootname = PathResolver.GetXmlRootNodeName(item);
+                    string rootname = PathResolver.GetXmlRootNodeName(item, modeRead: true);
 
                     if (string.IsNullOrEmpty(rootname))
                     {

@@ -41,7 +41,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             }
         }
 
-        public static string? GetXmlRootNodeName(BaseItem item)
+        public static string? GetXmlRootNodeName(BaseItem item, bool modeRead = false)
         {
             if (item is Movie)
             {
@@ -57,7 +57,7 @@ namespace Jellyfin.Plugin.DateAddedAdvanced
             }
             else if (item is Episode)
             {
-                if (Plugin.Instance.Configuration.UseSeasonDateForEpisodes)
+                if (modeRead && Plugin.Instance.Configuration.UseSeasonDateForEpisodes)
                 {
                     return "season";
                 }

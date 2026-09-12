@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Jellyfin.Plugin.DateAddedAdvanced.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="GitVersion.MsBuild" Version="6.8.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
