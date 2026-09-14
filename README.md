@@ -1,7 +1,6 @@
 <h1 align="center">Jellyfin DateAdded Advanced Plugin</h1>
 <p align="center">
-
-<img alt="Logo Banner" src="https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>
+  <img alt="DateAdded Advanced Logo" src="logo.png" width="160" />
 </p>
 
 # What is it?
