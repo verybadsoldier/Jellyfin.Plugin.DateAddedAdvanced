@@ -6,8 +6,7 @@
         "overview": "Improved DateAdded handling",
         "owner": "verybadsoldier",
         "category": "General",
-        "image": "logo.png",
-        "imageUrl": "https://verybadsoldier.github.io/Jellyfin.Plugin.DateAddedAdvanced/dateaddedadvanced/logo.png",
+        "imageUrl": "https://raw.githubusercontent.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/main/logo.png",
         "versions": [
             {
                 "version": "4.1.0.0",
