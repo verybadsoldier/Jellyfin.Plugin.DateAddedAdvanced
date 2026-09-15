@@ -6,7 +6,17 @@
         "overview": "Improved DateAdded handling",
         "owner": "verybadsoldier",
         "category": "General",
+        "image": "logo.png",
+        "imageUrl": "https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases/download/v4.1.0/dateaddedadvanced_4.1.0.0.zip/dateaddedadvanced/logo.png",
         "versions": [
+            {
+                "version": "4.1.0.0",
+                "changelog": "\nchangelog\n- [18a86db] feat: add project logo\n- [e045451] tests: added\n- [6c018bb] feat: add AddDateToExistingNfos to replace UpdateExistingNfos - Add `<dateadded>` to existing NFO files when missing (existing timestamps are always preserved)\n- [27f2360] build: automatically deploy to jellyfin plugin dir when building\n- [78f4bb0] feat(ui): new settings UI\n- [4d95bfb] fix(logs): fix wrong log levels\n- [f31b6fe] docs: Update repository URL using gh-pages",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases/download/v4.1.0/dateaddedadvanced_4.1.0.0.zip",
+                "checksum": "2b73224c84317f81f97ff304c5dc97de",
+                "timestamp": "2026-09-15T18:47:50Z"
+            },
             {
                 "version": "4.0.0.0",
                 "changelog": "\nchangelog\n- [50886bf] update to jellyfin 12",
