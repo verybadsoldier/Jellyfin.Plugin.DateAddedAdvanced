@@ -9,7 +9,7 @@ description: >
   Allows fore more fine-grained control over DateAdded attributes for database entries
 category: "General"
 owner: "verybadsoldier"
-image: "../logo.png"
+imageUrl: "https://raw.githubusercontent.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/main/logo.png"
 artifacts:
 - "Jellyfin.Plugin.DateAddedAdvanced.dll"
 changelog: >
