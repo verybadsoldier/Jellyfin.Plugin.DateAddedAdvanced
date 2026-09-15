@@ -7,7 +7,7 @@
         "owner": "verybadsoldier",
         "category": "General",
         "image": "logo.png",
-        "imageUrl": "https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases/download/v4.1.0/dateaddedadvanced_4.1.0.0.zip/dateaddedadvanced/logo.png",
+        "imageUrl": "https://verybadsoldier.github.io/Jellyfin.Plugin.DateAddedAdvanced/dateaddedadvanced/logo.png",
         "versions": [
             {
                 "version": "4.1.0.0",
