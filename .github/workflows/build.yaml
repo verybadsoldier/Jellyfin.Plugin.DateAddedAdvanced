@@ -184,16 +184,22 @@ jobs:
           RELEASE_INFO=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/tags/${RELEASE_TAG}")
           DOWNLOAD_URL=$(echo "$RELEASE_INFO" | jq -r '.assets[] | select(.name | test("\\.zip$")) | .browser_download_url')
           echo "download url: ${DOWNLOAD_URL}"
+
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          REPO_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io/${REPO_NAME}"
+          echo "repo url: ${REPO_URL}"
           
           echo "::group::Updating manifest.json"
-          jprm repo add ./manifest.json "$(ls -d *.zip)" -u "${DOWNLOAD_URL}" -U "${DOWNLOAD_URL}"
+          jprm repo add ./manifest.json "$(ls -d *.zip)" -u "${REPO_URL}" -U "${DOWNLOAD_URL}"
+          rm -f *.zip changelog.md
           echo "::endgroup::"
 
       - name: Commit file
         run: |-
           git config --global user.name "${GITHUB_ACTOR}"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -a -m "Update manifest.json for release ${GITHUB_REF#refs/tags/}"
+          git add -A
+          git commit -m "Update manifest.json for release ${GITHUB_REF#refs/tags/}" || echo "No changes to commit"
 
       - name: Push changes
         uses: ad-m/github-push-action@v1.0.0
