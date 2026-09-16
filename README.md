@@ -1,6 +1,6 @@
 <h1 align="center">Jellyfin DateAdded Advanced Plugin</h1>
 <p align="center">
-  <img alt="DateAdded Advanced Logo" src="logo.png" width="160" />
+  <img alt="DateAdded Advanced Logo" src="logo.png" width="320" />
 </p>
 
 # What is it?
