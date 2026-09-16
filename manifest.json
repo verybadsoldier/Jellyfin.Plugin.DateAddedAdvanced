@@ -1,13 +1,21 @@
 [
     {
         "guid": "c31ce313-d3d3-4a93-ad6d-8b235a9c2078",
-        "name": "DateAddedAdvanced",
+        "name": "DateAdded Advanced",
         "description": "Allows fore more fine-grained control over DateAdded attributes for database entries\n",
         "overview": "Improved DateAdded handling",
         "owner": "verybadsoldier",
         "category": "General",
         "imageUrl": "https://raw.githubusercontent.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/main/logo.png",
         "versions": [
+            {
+                "version": "4.1.1.0",
+                "changelog": "\nchangelog\n- [094e835] fix: inconsistent plugin name in build.yaml and Plugin.cs\n- [ce16196] feat: updated logo to make it 16:9\n- [e79e39e] chore(build): use raw GitHub imageUrl for plugin logo\n- [b2210ac] fix(ci): use repository base url for jprm and stage extracted assets",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/verybadsoldier/Jellyfin.Plugin.DateAddedAdvanced/releases/download/v4.1.1/dateadded-advanced_4.1.1.0.zip",
+                "checksum": "fd30216dd94c8aa02befa6706d2789d1",
+                "timestamp": "2026-09-16T20:05:22Z"
+            },
             {
                 "version": "4.1.0.0",
                 "changelog": "\nchangelog\n- [18a86db] feat: add project logo\n- [e045451] tests: added\n- [6c018bb] feat: add AddDateToExistingNfos to replace UpdateExistingNfos - Add `<dateadded>` to existing NFO files when missing (existing timestamps are always preserved)\n- [27f2360] build: automatically deploy to jellyfin plugin dir when building\n- [78f4bb0] feat(ui): new settings UI\n- [4d95bfb] fix(logs): fix wrong log levels\n- [f31b6fe] docs: Update repository URL using gh-pages",
